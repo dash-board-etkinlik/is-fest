@@ -1,0 +1,3346 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAAN Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brandDark: '#14171b',
+                        brandSidebar: '#1c1f26',
+                        brandGreen: '#e8a33d',
+                        brandGreenDark: '#c1801f',
+                        brandGreenLight: '#f6dfb4',
+                        brandBg: '#faf7f1'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #faf7f1; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f4efe6; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d9cdb8; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #b7a583; }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-stone-100 text-stone-800 antialiased min-h-screen">
+
+    <!-- Giriş Ekranı: Firebase Authentication ile korunur, ortak şifre burada girilir -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center bg-gradient-to-b from-stone-950 to-stone-900 px-4">
+        <div class="w-full max-w-sm bg-stone-900/60 backdrop-blur border border-stone-700 rounded-[1.75rem] p-8 shadow-2xl">
+            <h1 class="text-2xl font-display font-extrabold tracking-wider text-amber-400 text-center mb-1 [text-shadow:0_0_18px_rgba(245,158,11,0.55)]">DASHBOARD</h1>
+            <p class="text-xs text-stone-400 text-center mb-6">Devam etmek için şifreyi girin</p>
+            <input type="password" id="loginPasswordInput" placeholder="Şifre" class="w-full px-4 py-3 bg-stone-950/70 border border-stone-600 rounded-xl text-sm text-white placeholder-stone-500 focus:outline-none focus:border-amber-500 mb-3" onkeydown="if(event.key==='Enter') attemptLogin()">
+            <button onclick="attemptLogin()" id="loginButton" class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-stone-900 font-bold rounded-xl transition-colors">Giriş Yap</button>
+            <p id="loginError" class="text-xs text-red-400 text-center mt-3 hidden">Şifre hatalı, tekrar deneyin.</p>
+        </div>
+    </div>
+
+    <div id="appShell" class="hidden min-h-screen flex flex-col md:flex-row">
+
+    <aside class="w-full md:w-64 bg-gradient-to-b from-stone-950 to-stone-900 text-stone-300 flex-shrink-0 flex flex-col justify-between shadow-xl min-h-screen">
+        <div>
+            <!-- Header Logo -->
+            <div class="px-6 py-6 border-b border-dashed border-stone-700 flex items-center justify-between">
+                <h1 class="text-3xl font-display font-extrabold tracking-wider text-amber-400 [text-shadow:0_0_18px_rgba(245,158,11,0.55)]">DASHBOARD</h1>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="p-4 space-y-1.5" id="sidebarNav">
+                <button onclick="switchTab('panel')" id="nav-panel" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
+                    <i class="fa-solid fa-border-all w-5 text-center text-lg"></i>
+                    <span>Panel</span>
+                </button>
+
+                <button onclick="switchTab('odeme')" id="nav-odeme" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
+                    <i class="fa-solid fa-credit-card w-5 text-center text-lg"></i>
+                    <span>Ödeme Şekli</span>
+                </button>
+
+                <button onclick="switchTab('urunler')" id="nav-urunler" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
+                    <i class="fa-solid fa-boxes-stacked w-5 text-center text-lg"></i>
+                    <span>Ürünler</span>
+                </button>
+
+                <button onclick="switchTab('ciroOrani')" id="nav-ciroOrani" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
+                    <i class="fa-solid fa-chart-pie w-5 text-center text-lg"></i>
+                    <span>Ciro Oranı</span>
+                </button>
+
+                <button onclick="switchTab('posCihazlari')" id="nav-posCihazlari" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
+                    <i class="fa-solid fa-cash-register w-5 text-center text-lg"></i>
+                    <span>POS Cihazları</span>
+                </button>
+
+                <button onclick="switchTab('urunGrafigi')" id="nav-urunGrafigi" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
+                    <i class="fa-solid fa-chart-column w-5 text-center text-lg"></i>
+                    <span>Ürün Grafiği</span>
+                </button>
+
+                <button onclick="switchTab('standVeriGirisi')" id="nav-standVeriGirisi" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
+                    <i class="fa-solid fa-store w-5 text-center text-lg"></i>
+                    <span>Stand Veri Girişi</span>
+                </button>
+
+                <button onclick="switchTab('urunVeriGirisi')" id="nav-urunVeriGirisi" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
+                    <i class="fa-solid fa-cart-shopping w-5 text-center text-lg"></i>
+                    <span>Ürün Veri Girişi</span>
+                </button>
+
+                <button onclick="switchTab('ayarlar')" id="nav-ayarlar" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
+                    <i class="fa-solid fa-gear w-5 text-center text-lg"></i>
+                    <span>Ayarlar</span>
+                </button>
+
+                <!-- İndir button directly under Ayarlar -->
+                <button onclick="switchTab('indir')" id="nav-indir" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
+                    <i class="fa-solid fa-download w-5 text-center text-lg"></i>
+                    <span>İndir</span>
+                </button>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-stone-800/80 space-y-2">
+            <button onclick="logoutUser()" class="w-full text-xs font-semibold text-stone-400 hover:text-amber-400 transition-colors flex items-center justify-center gap-1.5 py-2">
+                <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+            </button>
+            <button onclick="clearAllSavedData()" class="w-full text-xs font-semibold text-stone-400 hover:text-red-400 transition-colors flex items-center justify-center gap-1.5 py-2">
+                <i class="fa-solid fa-trash-can"></i> Kayıtlı Verileri Temizle
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-4 md:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
+
+        <header class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-200">
+            <h2 id="pageTitle" class="text-2xl font-display font-bold text-stone-800">Ana Panel</h2>
+        </header>
+
+        <div id="toast" class="hidden fixed bottom-5 right-5 bg-stone-900 text-white px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-3 border border-amber-500/50 transition-all duration-300">
+            <i class="fa-solid fa-circle-check text-amber-400 text-lg"></i>
+            <span id="toastMessage" class="text-sm font-medium">İşlem başarıyla gerçekleşti.</span>
+        </div>
+
+        <!-- ==================== VIEW 1: PANEL ==================== -->
+        <section id="view-panel" class="view-content space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200 flex flex-col justify-between">
+                    <p class="text-base font-extrabold text-stone-700">Bugünkü Ciro</p>
+                    <h3 class="text-3xl font-display font-black text-amber-500 mt-3 font-mono" id="panelBugunkuCiro">₺0.00</h3>
+                </div>
+
+                <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200 flex flex-col justify-between">
+                    <p class="text-base font-extrabold text-stone-700">Toplam Ciro</p>
+                    <h3 class="text-3xl font-display font-black text-amber-500 mt-3 font-mono" id="panelToplamCiro">₺0.00</h3>
+                </div>
+
+                <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200 flex flex-col justify-between">
+                    <p class="text-base font-extrabold text-stone-700">Bugünkü Hesaplanan Ürün Cirosu</p>
+                    <h3 class="text-3xl font-display font-black text-emerald-600 mt-3 font-mono" id="panelBugunkuUrunCiro">₺0.00</h3>
+                </div>
+
+                <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200 flex flex-col justify-between">
+                    <p class="text-base font-extrabold text-stone-700">Hesaplanan Toplam Ürün Cirosu</p>
+                    <h3 class="text-3xl font-display font-black text-emerald-600 mt-3 font-mono" id="panelToplamUrunCiro">₺0.00</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
+                <h3 class="text-lg font-bold text-stone-800 mb-4">Günlük Ciro Grafiği</h3>
+                <div class="w-full h-64 relative">
+                    <canvas id="chartPanelToplamCiro"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
+                <h3 class="text-lg font-bold text-stone-800 mb-4">Toplam Ciro Grafiği</h3>
+                <div class="w-full h-64 relative">
+                    <canvas id="chartPanelToplamCiroKumulatif"></canvas>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
+                    <p class="text-base font-extrabold text-stone-700">Bugünkü Nakit</p>
+                    <h4 class="text-2xl font-display font-bold text-stone-900 mt-2 font-mono" id="panelBugunkuNakit">₺0.00</h4>
+                </div>
+
+                <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
+                    <p class="text-base font-extrabold text-stone-700">Bugünkü Kredi</p>
+                    <h4 class="text-2xl font-display font-bold text-stone-900 mt-2 font-mono" id="panelBugunkuKredi">₺0.00</h4>
+                </div>
+
+                <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
+                    <p class="text-base font-extrabold text-stone-700">Toplam Nakit</p>
+                    <h4 class="text-2xl font-display font-bold text-stone-900 mt-2 font-mono" id="panelToplamNakit">₺0.00</h4>
+                </div>
+
+                <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
+                    <p class="text-base font-extrabold text-stone-700">Toplam Kredi</p>
+                    <h4 class="text-2xl font-display font-bold text-stone-900 mt-2 font-mono" id="panelToplamKredi">₺0.00</h4>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+                    <h3 class="text-lg font-bold text-stone-800">Ödeme Şekli Grafiği</h3>
+                    <div class="flex items-center gap-4 text-xs font-semibold">
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#f59e0b]"></span> Kredi</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#0f766e]"></span> Nakit</span>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div class="inline-flex p-1 bg-stone-100 rounded-xl border border-stone-200">
+                        <button onclick="setPanelOdemeSekliMode('gunluk')" id="panelOdemeModeBtn-gunluk" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all">Günlük</button>
+                        <button onclick="setPanelOdemeSekliMode('toplam')" id="panelOdemeModeBtn-toplam" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all">Toplam</button>
+                        <button onclick="setPanelOdemeSekliMode('tumGunler')" id="panelOdemeModeBtn-tumGunler" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all">Tüm Günler</button>
+                    </div>
+                    <input type="date" id="panelOdemeSekliDate" onchange="renderPanelCharts()" class="px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed">
+                </div>
+                <div class="w-full h-72 relative">
+                    <canvas id="chartPanelOdemeSekli"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== VIEW 2: ÖDEME ŞEKLİ ==================== -->
+        <section id="view-odeme" class="view-content hidden space-y-6">
+            <div class="bg-white rounded-[1.75rem] shadow-sm border border-stone-200 p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <h3 class="text-lg font-bold text-stone-800">Ödeme Şekli Detayları</h3>
+                    <div class="flex items-center gap-2">
+                        <input type="date" id="odemeFilterDate" onchange="renderOdemeTable()" class="px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold">
+                        <button onclick="clearOdemeFilterDate()" class="text-xs text-stone-400 hover:text-stone-700 p-1"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-stone-200">
+                    <table class="w-full text-left text-sm text-stone-600">
+                        <thead class="bg-stone-50 text-stone-700 font-semibold border-b border-stone-200">
+                            <tr>
+                                <th class="p-4">Tarih</th>
+                                <th class="p-4">Nakit</th>
+                                <th class="p-4">Kredi</th>
+                                <th class="p-4 text-amber-700 font-bold">Toplam</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-stone-100" id="odemeTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== VIEW 3: ÜRÜNLER ==================== -->
+        <section id="view-urunler" class="view-content hidden space-y-6">
+            <div class="bg-white rounded-[1.75rem] shadow-sm border border-stone-200 p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <h3 class="text-lg font-bold text-stone-800">Ürün Detayları</h3>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <div class="flex items-center gap-2">
+                            <input type="date" id="urunlerFilterDate" onchange="renderUrunlerView()" class="px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold">
+                            <button onclick="clearUrunlerFilterDate()" class="text-xs text-stone-400 hover:text-stone-700 p-1"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="inline-flex p-1 bg-stone-100 rounded-xl border border-stone-200 flex-wrap gap-1" id="urunlerCategoryNav"></div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-stone-200">
+                    <table class="w-full text-center text-sm text-stone-700 border-collapse border border-stone-200">
+                        <thead class="bg-stone-50 text-stone-800 font-bold border-b border-stone-200" id="urunlerTableHeader"></thead>
+                        <tbody id="urunlerTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== VIEW 4: CİRO ORANI ==================== -->
+        <section id="view-ciroOrani" class="view-content hidden space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
+                    <p class="text-lg font-extrabold text-stone-800 mb-3 text-center">Satış Adedi</p>
+                    <div class="flex items-end justify-between gap-4">
+                        <div>
+                            <p class="text-xs font-semibold text-stone-400">Toplam</p>
+                            <h4 class="text-2xl font-display font-black text-amber-600" id="ciroTotalSoldUnits">0</h4>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-semibold text-stone-400">Günlük</p>
+                            <h4 class="text-2xl font-display font-black text-amber-600" id="ciroDailySoldUnits">0</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
+                    <p class="text-lg font-extrabold text-stone-800 mb-3 text-center">Hesaplanan Ürün Cirosu</p>
+                    <div class="flex items-end justify-between gap-4">
+                        <div>
+                            <p class="text-xs font-semibold text-stone-400">Toplam</p>
+                            <h4 class="text-2xl font-display font-black text-emerald-600 font-mono" id="ciroTotalCalculatedRevenue">₺0.00</h4>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-semibold text-stone-400">Günlük</p>
+                            <h4 class="text-2xl font-display font-black text-emerald-600 font-mono" id="ciroDailyCalculatedRevenue">₺0.00</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-[1.75rem] shadow-sm border border-stone-200">
+                    <p class="text-sm font-extrabold text-stone-800 mb-2">En Çok Satılan Ürün</p>
+                    <p class="text-[11px] font-semibold text-stone-400">Toplam</p>
+                    <h4 class="text-sm font-bold text-stone-800 truncate mb-1.5" id="ciroTopSoldProduct">-</h4>
+                    <p class="text-[11px] font-semibold text-stone-400">Günlük</p>
+                    <h4 class="text-sm font-bold text-stone-800 truncate" id="ciroTopSoldProductDaily">-</h4>
+                </div>
+                <div class="bg-white p-5 rounded-[1.75rem] shadow-sm border border-stone-200">
+                    <p class="text-sm font-extrabold text-stone-800 mb-2">En Az Satılan Ürün</p>
+                    <p class="text-[11px] font-semibold text-stone-400">Toplam</p>
+                    <h4 class="text-sm font-bold text-stone-800 truncate mb-1.5" id="ciroLeastSoldProduct">-</h4>
+                    <p class="text-[11px] font-semibold text-stone-400">Günlük</p>
+                    <h4 class="text-sm font-bold text-stone-800 truncate" id="ciroLeastSoldProductDaily">-</h4>
+                </div>
+                <div class="bg-white p-5 rounded-[1.75rem] shadow-sm border border-stone-200">
+                    <p class="text-sm font-extrabold text-stone-800 mb-2">En Yüksek Cirolu Ürün</p>
+                    <p class="text-[11px] font-semibold text-stone-400">Toplam</p>
+                    <h4 class="text-sm font-bold text-stone-800 truncate mb-1.5" id="ciroTopRevenueProduct">-</h4>
+                    <p class="text-[11px] font-semibold text-stone-400">Günlük</p>
+                    <h4 class="text-sm font-bold text-stone-800 truncate" id="ciroTopRevenueProductDaily">-</h4>
+                </div>
+                <div class="bg-white p-5 rounded-[1.75rem] shadow-sm border border-stone-200">
+                    <p class="text-sm font-extrabold text-stone-800 mb-2">En Düşük Cirolu Ürün</p>
+                    <p class="text-[11px] font-semibold text-stone-400">Toplam</p>
+                    <h4 class="text-sm font-bold text-stone-800 truncate mb-1.5" id="ciroLeastRevenueProduct">-</h4>
+                    <p class="text-[11px] font-semibold text-stone-400">Günlük</p>
+                    <h4 class="text-sm font-bold text-stone-800 truncate" id="ciroLeastRevenueProductDaily">-</h4>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-[1.75rem] shadow-sm border border-stone-200 p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-stone-100">
+                    <h3 class="text-lg font-bold text-stone-800">Tüm Ürünler Ciro & Satış Oranı Analizi</h3>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <div class="inline-flex flex-wrap gap-1 p-1 bg-stone-100 rounded-xl border border-stone-200" id="ciroCategoryNav"></div>
+                        <input type="text" id="ciroSearchInput" oninput="renderCiroOraniTable()" placeholder="Ürün ara..." class="px-3 py-1.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-medium focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="inline-flex p-1 bg-stone-100 rounded-xl border border-stone-200">
+                        <button onclick="setCiroOraniTableMode('gunluk')" id="ciroTableModeBtn-gunluk" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all">Günlük</button>
+                        <button onclick="setCiroOraniTableMode('toplam')" id="ciroTableModeBtn-toplam" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all">Toplam</button>
+                    </div>
+                    <input type="date" id="ciroOraniDateInput" onchange="renderCiroOraniTable()" class="px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold">
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-stone-200">
+                    <table class="w-full text-left text-xs text-stone-600">
+                        <thead class="bg-stone-50 text-stone-800 font-bold border-b border-stone-200">
+                            <tr>
+                                <th class="p-3.5">Ürün Adı</th>
+                                <th class="p-3.5">Kategori</th>
+                                <th class="p-3.5 text-right cursor-pointer select-none hover:text-amber-600" onclick="sortCiroColumn('sold')">Satış Adeti<span id="ciroArrow-sold"></span></th>
+                                <th class="p-3.5 text-center cursor-pointer select-none hover:text-amber-600" onclick="sortCiroColumn('price')">Güncel Birim Fiyat (₺)<span id="ciroArrow-price"></span></th>
+                                <th class="p-3.5 text-right cursor-pointer select-none hover:text-amber-600" onclick="sortCiroColumn('revenue')">Toplam Ciro (₺)<span id="ciroArrow-revenue"></span></th>
+                                <th class="p-3.5 whitespace-nowrap cursor-pointer select-none hover:text-amber-600" onclick="sortCiroColumn('salesPercent')">Satış Oranı (%)<span id="ciroArrow-salesPercent"></span></th>
+                                <th class="p-3.5 whitespace-nowrap cursor-pointer select-none hover:text-amber-600" onclick="sortCiroColumn('revenuePercent')">Ciro Oranı (%)<span id="ciroArrow-revenuePercent"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-stone-100" id="ciroOraniTableBody"></tbody>
+                        <tfoot class="bg-stone-100 font-bold text-stone-800 border-t border-stone-300" id="ciroOraniTableFoot"></tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== VIEW 5: POS CİHAZLARI ==================== -->
+        <section id="view-posCihazlari" class="view-content hidden space-y-6">
+            <div class="bg-white rounded-[1.75rem] shadow-sm border border-stone-200 p-6 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-stone-100">
+                    <h3 class="text-lg font-bold text-stone-800">POS Cihazları Analizi</h3>
+                    <div class="flex items-center gap-2 flex-wrap bg-stone-100 p-1.5 rounded-2xl border border-stone-200">
+                        <input type="date" id="chartPosGunlukDate" onchange="setPosGunlukDate(this.value, this.id)" class="px-3 py-1.5 bg-white border border-stone-300 rounded-xl text-xs font-semibold text-stone-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <div class="inline-flex p-1 bg-stone-200/60 rounded-xl flex-wrap gap-1" id="posStandNav"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="border border-stone-200 rounded-[1.75rem] p-6 flex flex-col items-center bg-stone-50/50">
+                        <h4 class="text-base font-bold text-stone-800 mb-2">Günlük Satış</h4>
+                        <div class="w-80 h-80 relative flex items-center justify-center">
+                            <canvas id="chartPosGunluk"></canvas>
+                        </div>
+                        <div class="mt-6 w-full text-center">
+                            <span class="inline-block px-4 py-2 bg-white border border-stone-200 rounded-xl text-xs font-bold text-stone-700">Günlük Toplam: <span id="posGunlukToplamText" class="text-amber-600">₺0.00</span></span>
+                        </div>
+                    </div>
+                    <div class="border border-stone-200 rounded-[1.75rem] p-6 flex flex-col items-center bg-stone-50/50">
+                        <h4 class="text-base font-bold text-stone-800 mb-2">Toplam Satış</h4>
+                        <div class="w-80 h-80 relative flex items-center justify-center">
+                            <canvas id="chartPosToplam"></canvas>
+                        </div>
+                        <div class="mt-6 w-full text-center">
+                            <span class="inline-block px-4 py-2 bg-white border border-stone-200 rounded-xl text-xs font-bold text-stone-700">Dönem Toplamı: <span id="posDonemToplamText" class="text-amber-600">₺0.00</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border border-stone-200 rounded-[1.75rem] p-6 bg-stone-50/50 space-y-3">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <h4 class="text-base font-bold text-stone-800">POS Cihazları Satış Detayı</h4>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <input type="date" id="chartPosGunlukDateBar" onchange="setPosGunlukDate(this.value, this.id)" class="px-3 py-1.5 bg-white border border-stone-300 rounded-xl text-xs font-semibold text-stone-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <div class="inline-flex p-1 bg-stone-100 rounded-xl flex-wrap gap-1" id="posStandNavBar"></div>
+                            <div class="inline-flex p-1 bg-white rounded-xl border border-stone-200 gap-1 text-xs font-semibold shadow-sm">
+                                <button onclick="setPosBarMode('all')" id="btnPosBarAll" class="px-3 py-1 rounded-lg transition-all bg-amber-500 text-stone-900 shadow-sm">İkisi</button>
+                                <button onclick="setPosBarMode('gunluk')" id="btnPosBarGunluk" class="px-3 py-1 rounded-lg transition-all text-stone-600 hover:text-stone-900">Günlük</button>
+                                <button onclick="setPosBarMode('toplam')" id="btnPosBarToplam" class="px-3 py-1 rounded-lg transition-all text-stone-600 hover:text-stone-900">Toplam</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-full h-72 relative">
+                        <canvas id="chartPosBar"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== VIEW 6: ÜRÜN GRAFİĞİ ==================== -->
+        <section id="view-urunGrafigi" class="view-content hidden space-y-6">
+            <div class="bg-white rounded-[1.75rem] shadow-sm border border-stone-200 p-6 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-stone-100">
+                    <h3 class="text-lg font-bold text-stone-800">Ürün Grafiği Analizi</h3>
+                    <div class="flex items-center gap-2 flex-wrap bg-stone-100 p-1.5 rounded-2xl border border-stone-200">
+                        <input type="date" id="chartGunlukDate" onchange="setUrunGunlukDate(this.value, this.id)" class="px-3 py-1.5 bg-white border border-stone-300 rounded-xl text-xs font-semibold text-stone-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <div class="inline-flex p-1 bg-stone-200/60 rounded-xl flex-wrap gap-1" id="pieCategoryNav"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="border border-stone-200 rounded-[1.75rem] p-6 flex flex-col items-center bg-stone-50/50">
+                        <h4 class="text-base font-bold text-stone-800 mb-2">Günlük Satış</h4>
+                        <div class="w-80 h-80 relative flex items-center justify-center">
+                            <canvas id="chartGunluk"></canvas>
+                        </div>
+                        <div class="mt-6 w-full text-center">
+                            <span class="inline-block px-4 py-2 bg-white border border-stone-200 rounded-xl text-xs font-bold text-stone-700">Günlük Toplam: <span id="gunlukToplamText" class="text-amber-600">0 Adet</span></span>
+                        </div>
+                    </div>
+                    <div class="border border-stone-200 rounded-[1.75rem] p-6 flex flex-col items-center bg-stone-50/50">
+                        <h4 class="text-base font-bold text-stone-800 mb-2">Toplam Satış</h4>
+                        <div class="w-80 h-80 relative flex items-center justify-center">
+                            <canvas id="chartToplam"></canvas>
+                        </div>
+                        <div class="mt-6 w-full text-center">
+                            <span class="inline-block px-4 py-2 bg-white border border-stone-200 rounded-xl text-xs font-bold text-stone-700">Dönem Toplamı: <span id="donemToplamText" class="text-amber-600">0 Adet</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border border-stone-200 rounded-[1.75rem] p-6 bg-stone-50/50 space-y-3">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <h4 class="text-base font-bold text-stone-800">Ürün Satış Performansı</h4>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <input type="date" id="chartGunlukDateBar" onchange="setUrunGunlukDate(this.value, this.id)" class="px-3 py-1.5 bg-white border border-stone-300 rounded-xl text-xs font-semibold text-stone-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <div class="inline-flex p-1 bg-stone-100 rounded-xl flex-wrap gap-1" id="barCategoryNav"></div>
+                            <div class="inline-flex p-1 bg-white rounded-xl border border-stone-200 gap-1 text-xs font-semibold shadow-sm">
+                                <button onclick="setUrunBarMode('all')" id="btnUrunBarAll" class="px-3 py-1 rounded-lg transition-all bg-amber-500 text-stone-900 shadow-sm">İkisi</button>
+                                <button onclick="setUrunBarMode('gunluk')" id="btnUrunBarGunluk" class="px-3 py-1 rounded-lg transition-all text-stone-600 hover:text-stone-900">Günlük</button>
+                                <button onclick="setUrunBarMode('toplam')" id="btnUrunBarToplam" class="px-3 py-1 rounded-lg transition-all text-stone-600 hover:text-stone-900">Toplam</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-full h-80 relative">
+                        <canvas id="chartUrunBar"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== VIEW 7: STANDLAR VERİ GİRİŞİ ==================== -->
+        <section id="view-standVeriGirisi" class="view-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-base font-bold text-stone-800">Dosya Yükle</h3>
+                    <span class="text-[11px] font-semibold text-stone-400 bg-stone-100 px-2 py-1 rounded-full">.xlsx / .csv</span>
+                </div>
+                <div id="standFileDropzone" onclick="document.getElementById('standFileInput').click()" class="relative border-2 border-dashed border-stone-300 rounded-2xl px-6 py-8 text-center cursor-pointer transition-all hover:border-amber-400 hover:bg-amber-50/40">
+                    <input type="file" id="standFileInput" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleStandFileSelect(event)">
+                    <div id="standDropzoneIdle">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-amber-400 mb-2"></i>
+                        <p class="text-sm font-semibold text-stone-700">Dosyanızı buraya sürükleyip bırakın</p>
+                    </div>
+                    <div id="standDropzoneSuccess" class="hidden">
+                        <i class="fa-solid fa-circle-check text-3xl text-emerald-500 mb-2"></i>
+                        <p class="text-sm font-semibold text-stone-800" id="standDropzoneSuccessText">Dosya yüklendi.</p>
+                        <p class="text-xs text-stone-500 mt-1" id="standDropzoneSuccessSub"></p>
+                    </div>
+                    <div id="standDropzoneError" class="hidden">
+                        <i class="fa-solid fa-triangle-exclamation text-3xl text-red-500 mb-2"></i>
+                        <p class="text-sm font-semibold text-red-600" id="standDropzoneErrorText">Hata oluştu.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 flex-wrap" id="standButtonsContainer"></div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5 bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200 flex flex-col justify-between space-y-5">
+                    <div>
+                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-stone-100">
+                            <h3 class="text-base font-bold text-stone-800">Günlük Veri Girişi</h3>
+                            <span id="activeStandBadge" class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-lg">Stand-1</span>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold text-stone-600 mb-1">Tarih</label>
+                            <input type="date" id="standInputDate" class="w-full px-3 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-medium">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold text-stone-600 mb-1">POS Seçimi</label>
+                            <select id="standPosSelect" class="w-full px-3 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-medium"></select>
+                        </div>
+                        <div class="space-y-3 mb-4">
+                            <label class="block text-xs font-semibold text-stone-600">Ödemeler (₺)</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <span class="text-[11px] font-semibold text-stone-500 block mb-1">Nakit</span>
+                                    <input type="number" id="standNakitInput" placeholder="0" class="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-sm font-bold">
+                                </div>
+                                <div>
+                                    <span class="text-[11px] font-semibold text-stone-500 block mb-1">Kredi</span>
+                                    <input type="number" id="standKrediInput" placeholder="0" class="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-sm font-bold">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="saveStandEntry()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-stone-900 font-bold text-xs rounded-xl shadow-md">Kaydet</button>
+                </div>
+
+                <div class="lg:col-span-7 bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
+                    <div class="flex items-center justify-between gap-3 mb-4 pb-2 border-b border-stone-100">
+                        <h3 class="text-base font-bold text-stone-800">Veri Giriş Geçmişi</h3>
+                        <div class="flex items-center gap-2">
+                            <input type="date" id="standFilterDate" onchange="renderStandHistory()" class="px-2.5 py-1 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold">
+                            <button onclick="clearStandFilterDate()" class="text-xs text-stone-400 hover:text-stone-700 p-1"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto rounded-xl border border-stone-200 max-h-[380px] custom-scrollbar">
+                        <table class="w-full text-left text-xs text-stone-600">
+                            <thead class="bg-amber-500/10 text-stone-800 font-bold border-b border-stone-200 sticky top-0 bg-white">
+                                <tr>
+                                    <th class="p-3 w-8"></th>
+                                    <th class="p-3">POS</th>
+                                    <th class="p-3">Tarih</th>
+                                    <th class="p-3">Nakit</th>
+                                    <th class="p-3">Kredi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-stone-100" id="standHistoryTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== VIEW 8: ÜRÜN VERİ GİRİŞİ ==================== -->
+        <section id="view-urunVeriGirisi" class="view-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-base font-bold text-stone-800">Dosya Yükle</h3>
+                    <span class="text-[11px] font-semibold text-stone-400 bg-stone-100 px-2 py-1 rounded-full">.xlsx / .csv</span>
+                </div>
+                <div id="fileDropzone" onclick="document.getElementById('fileInput').click()" class="relative border-2 border-dashed border-stone-300 rounded-2xl px-6 py-8 text-center cursor-pointer transition-all hover:border-amber-400 hover:bg-amber-50/40">
+                    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleFileSelect(event)">
+                    <div id="dropzoneIdle">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-amber-400 mb-2"></i>
+                        <p class="text-sm font-semibold text-stone-700">Dosyanızı buraya sürükleyip bırakın</p>
+                    </div>
+                    <div id="dropzoneSuccess" class="hidden">
+                        <i class="fa-solid fa-circle-check text-3xl text-emerald-500 mb-2"></i>
+                        <p class="text-sm font-semibold text-stone-800" id="dropzoneSuccessText">Dosya yüklendi.</p>
+                        <p class="text-xs text-stone-500 mt-1" id="dropzoneSuccessSub"></p>
+                    </div>
+                    <div id="dropzoneError" class="hidden">
+                        <i class="fa-solid fa-triangle-exclamation text-3xl text-red-500 mb-2"></i>
+                        <p class="text-sm font-semibold text-red-600" id="dropzoneErrorText">Hata oluştu.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 flex-wrap" id="urunVeriCategoryContainer"></div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5 bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200 flex flex-col justify-between space-y-5">
+                    <div>
+                        <h3 class="text-base font-bold text-stone-800 mb-4 pb-2 border-b border-stone-100">Günlük Veri Girişi</h3>
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold text-stone-600 mb-1">Tarih</label>
+                            <input type="date" id="urunInputDate" class="w-full px-3 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-medium">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold text-stone-600 mb-1">Ürün Seçimi</label>
+                            <select id="urunSelect" class="w-full px-3 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-medium"></select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold text-stone-600 mb-1">Satış Adedi</label>
+                            <input type="number" id="urunCountInput" min="0" placeholder="0" class="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-base font-bold">
+                        </div>
+                    </div>
+                    <button onclick="saveUrunEntry()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-stone-900 font-bold text-xs rounded-xl shadow-md">Kaydet</button>
+                </div>
+
+                <div class="lg:col-span-7 bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
+                    <div class="flex items-center justify-between gap-3 mb-4 pb-2 border-b border-stone-100">
+                        <h3 class="text-base font-bold text-stone-800">Veri Giriş Geçmişi</h3>
+                        <div class="flex items-center gap-2">
+                            <input type="date" id="urunFilterDate" onchange="renderUrunHistory()" class="px-2.5 py-1 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold">
+                            <button onclick="clearUrunFilterDate()" class="text-xs text-stone-400 hover:text-stone-700 p-1"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto rounded-xl border border-stone-200 max-h-[380px] custom-scrollbar">
+                        <table class="w-full text-left text-xs text-stone-600">
+                            <thead class="bg-amber-500/10 text-stone-800 font-bold border-b border-stone-200 sticky top-0 bg-white">
+                                <tr>
+                                    <th class="p-3 w-8"></th>
+                                    <th class="p-3">Kategori</th>
+                                    <th class="p-3">Ürün</th>
+                                    <th class="p-3">Tarih</th>
+                                    <th class="p-3 text-right">Satış Adedi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-stone-100" id="urunHistoryTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== VIEW 9: AYARLAR ==================== -->
+        <section id="view-ayarlar" class="view-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-6 bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200 space-y-4">
+                    <div class="flex items-center gap-3 pb-3 border-b border-stone-100">
+                        <div class="p-2.5 bg-amber-100 text-amber-700 rounded-xl"><i class="fa-solid fa-box-archive text-lg"></i></div>
+                        <div>
+                            <h3 class="text-base font-bold text-stone-800">Ürün & Kategori Ayarları</h3>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-600 mb-1">Kategori</label>
+                        <div class="flex items-center gap-2">
+                            <select id="settingCategorySelect" onchange="toggleNewCategoryInput(this.value)" class="flex-1 px-3 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-medium focus:outline-none"></select>
+                            <button type="button" onclick="deleteCategoryFromSettings()" title="Seçili kategoriyi sil" class="flex-shrink-0 px-3 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl text-xs transition-colors">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                        <input type="text" id="settingNewCategoryInput" placeholder="Yeni Kategori Adı..." class="hidden w-full mt-2 px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-xs font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-600 mb-1">Ürün Adı</label>
+                        <input type="text" id="settingProductNameInput" placeholder="Örn: Espresso" class="w-full px-3 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-600 mb-1">Ürün Fiyatı (₺)</label>
+                        <input type="number" step="0.5" min="0" id="settingProductPriceInput" placeholder="0.00" class="w-full px-3 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-bold">
+                    </div>
+                    <button onclick="saveProductFromSettings()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-stone-900 font-bold text-xs rounded-xl shadow-md">Kaydet</button>
+                </div>
+
+                <div class="lg:col-span-6 space-y-6">
+                    <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200 space-y-4">
+                        <div class="flex items-center gap-3 pb-3 border-b border-stone-100">
+                            <div class="p-2.5 bg-teal-100 text-teal-700 rounded-xl"><i class="fa-solid fa-cash-register text-lg"></i></div>
+                            <div>
+                                <h3 class="text-base font-bold text-stone-800">POS Cihazı Ekle</h3>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="settingPosNameInput" placeholder="Örn: POS-4" class="flex-1 px-3 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-medium">
+                            <button onclick="addPosFromSettings()" class="px-5 py-2.5 bg-stone-800 hover:bg-stone-900 text-white font-bold text-xs rounded-xl"><i class="fa-solid fa-plus"></i> POS Ekle</button>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-stone-500 mb-2">Mevcut POS Cihazları:</label>
+                            <div class="flex flex-wrap gap-2" id="settingPosChipsContainer"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200 space-y-4">
+                        <div class="flex items-center gap-3 pb-3 border-b border-stone-100">
+                            <div class="p-2.5 bg-amber-100 text-amber-800 rounded-xl"><i class="fa-solid fa-store text-lg"></i></div>
+                            <div>
+                                <h3 class="text-base font-bold text-stone-800">Stand Ekle</h3>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="settingStandNameInput" placeholder="Örn: Stand-4" class="flex-1 px-3 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-medium">
+                            <button onclick="addStandFromSettings()" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl"><i class="fa-solid fa-plus"></i> Stand Ekle</button>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-stone-500 mb-2">Mevcut Standlar:</label>
+                            <div class="flex flex-wrap gap-2" id="settingStandChipsContainer"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-[1.75rem] shadow-sm border border-stone-200 p-6 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-stone-100">
+                    <h3 class="text-base font-bold text-stone-800">Tanımlı Ürün ve Fiyat Yönetimi</h3>
+                    <span id="settingTotalProductCount" class="text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full">0 Ürün</span>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-stone-200">
+                    <table class="w-full text-left text-xs text-stone-600">
+                        <thead class="bg-stone-50 text-stone-800 font-bold border-b border-stone-200">
+                            <tr>
+                                <th class="p-3.5">Kategori</th>
+                                <th class="p-3.5">Ürün Adı</th>
+                                <th class="p-3.5 text-center">Güncel Birim Fiyat (₺)</th>
+                                <th class="p-3.5 text-center w-20">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-stone-100" id="settingProductTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== VIEW 10: YEDEKLEME (İNDİR) ==================== -->
+        <section id="view-indir" class="view-content hidden space-y-6">
+            <div class="bg-white rounded-[1.75rem] shadow-sm border border-stone-200 p-8 space-y-6">
+                <div class="flex items-center justify-between border-b border-stone-100 pb-4">
+                    <h3 class="text-xl font-bold text-stone-800">Yedekleme</h3>
+                    <span class="text-xs font-semibold text-stone-400 bg-stone-100 px-3 py-1 rounded-full">.xlsx</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Left Download Box -->
+                    <div class="border border-stone-200 rounded-2xl p-8 flex flex-col items-center justify-center text-center bg-stone-50/50 space-y-3">
+                        <i class="fa-solid fa-file-excel text-5xl text-emerald-600 mb-1"></i>
+                        <h4 class="text-base font-bold text-stone-800">Tüm Verileri İndir</h4>
+                        <p class="text-xs text-stone-400">Tüm veriler tek bir Excel dosyasına aktarılır.</p>
+                        <button onclick="exportAllDataToExcel()" class="mt-2 px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-stone-900 font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-download"></i> Excel İndir
+                        </button>
+                    </div>
+
+                    <!-- Right Upload Box -->
+                    <div id="backupFileDropzone" onclick="document.getElementById('backupFileInput').click()" class="relative border-2 border-dashed border-stone-300 rounded-2xl p-8 text-center cursor-pointer transition-all hover:border-amber-400 hover:bg-amber-50/40 flex flex-col items-center justify-center space-y-2">
+                        <input type="file" id="backupFileInput" accept=".xlsx,.xls" class="hidden" onchange="handleBackupFileSelect(event)">
+
+                        <div id="backupDropzoneIdle" class="flex flex-col items-center justify-center">
+                            <i class="fa-solid fa-cloud-arrow-up text-4xl text-amber-400 mb-2"></i>
+                            <p class="text-sm font-semibold text-stone-700">Yedek dosyasını buraya sürükleyin</p>
+                            <p class="text-xs text-stone-400 mt-1">veya tıklayarak dosya seçin</p>
+                        </div>
+
+                        <div id="backupDropzoneSuccess" class="hidden flex flex-col items-center justify-center">
+                            <i class="fa-solid fa-circle-check text-4xl text-emerald-500 mb-2"></i>
+                            <p class="text-sm font-semibold text-stone-800" id="backupDropzoneSuccessText">Veriler geri yüklendi.</p>
+                            <p class="text-xs text-stone-500 mt-1" id="backupDropzoneSuccessSub"></p>
+                            <button onclick="event.stopPropagation(); resetBackupDropzone();" class="mt-3 text-xs font-semibold text-amber-600 hover:underline">Başka bir dosya yükle</button>
+                        </div>
+
+                        <div id="backupDropzoneError" class="hidden flex flex-col items-center justify-center">
+                            <i class="fa-solid fa-triangle-exclamation text-4xl text-red-500 mb-2"></i>
+                            <p class="text-sm font-semibold text-red-600" id="backupDropzoneErrorText">Dosya okunamadı.</p>
+                            <button onclick="event.stopPropagation(); resetBackupDropzone();" class="mt-3 text-xs font-semibold text-stone-500 hover:underline">Tekrar dene</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    </div>
+
+    <!-- Firebase SDK (compat sürümü - script tag ile doğrudan kullanım) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+    <script>
+        // --- Firebase bağlantısı, ortak giriş ve gerçek zamanlı veri senkronizasyonu ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAIhcXM4w-vi-R4XUf26YFCu6PL8Lnqpqo",
+            authDomain: "kaandashboard-bc52c.firebaseapp.com",
+            projectId: "kaandashboard-bc52c",
+            storageBucket: "kaandashboard-bc52c.firebasestorage.app",
+            messagingSenderId: "990413095694",
+            appId: "1:990413095694:web:0571ebe616e5ca101f4d5f",
+            measurementId: "G-5TJV2VFG2B"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Ortak giriş hesabının e-postası; arkadaşlarınız sadece şifreyi girer, bu sabittir.
+        const SHARED_LOGIN_EMAIL = 'kaanata.is3301@gmail.com';
+
+        let firestoreUnsubscribe = null;
+        let appInitialized = false;
+
+        function attemptLogin() {
+            const pwInput = document.getElementById('loginPasswordInput');
+            const errEl = document.getElementById('loginError');
+            const btn = document.getElementById('loginButton');
+            const password = pwInput ? pwInput.value : '';
+
+            if (!password) {
+                if (errEl) { errEl.textContent = 'Lütfen şifreyi girin.'; errEl.classList.remove('hidden'); }
+                return;
+            }
+
+            if (errEl) errEl.classList.add('hidden');
+            if (btn) { btn.disabled = true; btn.textContent = 'Giriş yapılıyor...'; }
+
+            auth.signInWithEmailAndPassword(SHARED_LOGIN_EMAIL, password)
+                .catch(function() {
+                    if (errEl) {
+                        errEl.textContent = 'Şifre hatalı, tekrar deneyin.';
+                        errEl.classList.remove('hidden');
+                    }
+                })
+                .finally(function() {
+                    if (btn) { btn.disabled = false; btn.textContent = 'Giriş Yap'; }
+                });
+        }
+
+        function logoutUser() {
+            if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
+                stopFirestoreSync();
+                auth.signOut();
+            }
+        }
+
+        // Sayfa ilk kez açıldığında bir kere çalışması gereken DOM kurulumları
+        // (tarih inputlarının varsayılan değeri, dosya sürükle-bırak dinleyicileri).
+        function initializeAppOnce() {
+            setInputValue('standInputDate', TODAY_STR);
+            setInputValue('urunInputDate', TODAY_STR);
+            setInputValue('chartGunlukDate', TODAY_STR);
+            setInputValue('chartGunlukDateBar', TODAY_STR);
+            setInputValue('chartPosGunlukDate', TODAY_STR);
+            setInputValue('chartPosGunlukDateBar', TODAY_STR);
+
+            setupDropzoneEvents();
+            setupStandDropzoneEvents();
+            setupBackupDropzoneEvents();
+        }
+
+        // Firestore'daki paylaşılan belgeyi dinler: hem ilk yüklemede hem de herhangi bir
+        // arkadaşınız veri girdiğinde/sildiğinde tetiklenir ve ekranı anlık olarak günceller.
+        function startFirestoreSync() {
+            if (firestoreUnsubscribe) return;
+            firestoreUnsubscribe = db.collection('sharedData').doc('main').onSnapshot(function(doc) {
+                applyStateFromFirestore(doc.exists ? doc.data() : {});
+                if (!appInitialized) {
+                    appInitialized = true;
+                    initializeAppOnce();
+                }
+                renderEverything();
+            }, function(err) {
+                console.error('Firestore senkronizasyon hatası:', err);
+            });
+        }
+
+        function stopFirestoreSync() {
+            if (firestoreUnsubscribe) {
+                firestoreUnsubscribe();
+                firestoreUnsubscribe = null;
+            }
+            appInitialized = false;
+        }
+
+        auth.onAuthStateChanged(function(user) {
+            const loginScreen = document.getElementById('loginScreen');
+            const appShell = document.getElementById('appShell');
+            const pwInput = document.getElementById('loginPasswordInput');
+            if (user) {
+                if (loginScreen) loginScreen.classList.add('hidden');
+                if (appShell) appShell.classList.remove('hidden');
+                if (pwInput) pwInput.value = '';
+                startFirestoreSync();
+            } else {
+                if (loginScreen) loginScreen.classList.remove('hidden');
+                if (appShell) appShell.classList.add('hidden');
+            }
+        });
+
+        // Global switchTab definition in top level scope
+        let currentTab = 'panel';
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.view-content').forEach(el => el.classList.add('hidden'));
+
+            const target = document.getElementById(`view-${tabId}`);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-amber-500', 'text-stone-900', 'shadow-[0_0_20px_rgba(245,158,11,0.45)]');
+                btn.classList.add('text-stone-300', 'hover:bg-stone-800');
+            });
+
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.classList.remove('text-stone-300', 'hover:bg-stone-800');
+                activeNav.classList.add('bg-amber-500', 'text-stone-900', 'shadow-[0_0_20px_rgba(245,158,11,0.45)]');
+            }
+
+            const titleEl = document.getElementById('pageTitle');
+            if (titleEl) titleEl.textContent = pageTitles[tabId] || 'Dashboard';
+
+            if (tabId === 'urunGrafigi') {
+                renderPieCategoryNav();
+                setTimeout(renderCharts, 50);
+            } else if (tabId === 'posCihazlari') {
+                renderPosStandNav();
+                setTimeout(renderPosCharts, 50);
+            } else if (tabId === 'panel') {
+                updatePanelStats();
+                setTimeout(renderPanelCharts, 50);
+            } else if (tabId === 'odeme') {
+                renderOdemeTable();
+            } else if (tabId === 'urunler') {
+                renderUrunlerView();
+            } else if (tabId === 'ciroOrani') {
+                renderCiroOraniTable();
+            } else if (tabId === 'ayarlar') {
+                renderSettingsView();
+            } else if (tabId === 'urunVeriGirisi') {
+                renderUrunCategoryTabs();
+                renderUrunSelectOptions();
+            } else if (tabId === 'standVeriGirisi') {
+                renderStandButtons();
+                renderPosSelectOptions();
+            }
+        }
+
+        if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+            Chart.register(ChartDataLabels);
+            Chart.defaults.set('plugins.datalabels', { display: false });
+        }
+
+        const pageTitles = {
+            'panel': 'Ana Panel',
+            'odeme': 'Ödeme Şekli Analizi',
+            'urunler': 'Ürün Raporu',
+            'ciroOrani': 'Ciro Oranı Analizi',
+            'posCihazlari': 'POS Cihazları Analizi',
+            'urunGrafigi': 'Ürün Grafiği Analizi',
+            'standVeriGirisi': 'Standlar Veri Girişi',
+            'urunVeriGirisi': 'Ürün Veri Girişi',
+            'ayarlar': 'Sistem ve Veri Ayarları',
+            'indir': 'Yedekleme'
+        };
+
+        function getTodayString() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        const TODAY_STR = getTodayString();
+
+        function setInputValue(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        }
+
+        let urunCategories = {
+            'İçecek': ['Kahve', 'Çay', 'Limonata'],
+            'Yiyecek': ['Sandviç', 'Tost', 'Kruvasan'],
+            'Tatlı': ['Cheesecake', 'Muffin', 'Kurabiye']
+        };
+        let activeUrunCategory = 'Tümü';
+        let urunlerToplamSortDir = null;
+        let ciroSortColumn = null;
+        let ciroSortDir = 'desc';
+
+        let productPrices = {
+            'Kahve': 60,
+            'Çay': 20,
+            'Limonata': 45,
+            'Sandviç': 80,
+            'Tost': 65,
+            'Kruvasan': 70,
+            'Cheesecake': 110,
+            'Muffin': 55,
+            'Kurabiye': 40
+        };
+
+        let standList = ['Stand-1', 'Stand-2', 'Stand-3'];
+        let activeStand = 'Stand-1';
+        let posList = ['POS-1', 'POS-2', 'POS-3'];
+
+        let activePosStandFilter = 'Toplam';
+
+        let standHistory = [];
+        let urunHistory = [];
+
+        let urunBarMode = 'all';
+        let posBarMode = 'all';
+
+        function setUrunBarMode(mode) {
+            urunBarMode = mode;
+            ['All', 'Gunluk', 'Toplam'].forEach(m => {
+                const btn = document.getElementById(`btnUrunBar${m}`);
+                if (!btn) return;
+                const isMatch = m.toLowerCase() === (mode === 'all' ? 'all' : mode);
+                btn.className = `px-3 py-1 rounded-lg transition-all ${isMatch ? 'bg-amber-500 text-stone-900 shadow-sm font-bold' : 'text-stone-600 hover:text-stone-900'}`;
+            });
+            renderCharts();
+        }
+
+        function setPosBarMode(mode) {
+            posBarMode = mode;
+            ['All', 'Gunluk', 'Toplam'].forEach(m => {
+                const btn = document.getElementById(`btnPosBar${m}`);
+                if (!btn) return;
+                const isMatch = m.toLowerCase() === (mode === 'all' ? 'all' : mode);
+                btn.className = `px-3 py-1 rounded-lg transition-all ${isMatch ? 'bg-amber-500 text-stone-900 shadow-sm font-bold' : 'text-stone-600 hover:text-stone-900'}`;
+            });
+            renderPosCharts();
+        }
+
+        // Not: STORAGE_KEY artık kullanılmıyor (veriler Firestore'da), geriye dönük referans için bırakıldı.
+        const STORAGE_KEY = 'kaanDashboardData_v3';
+
+        function saveState() {
+            try {
+                const state = {
+                    urunCategories,
+                    activeUrunCategory,
+                    productPrices,
+                    standList,
+                    activeStand,
+                    activePosStandFilter,
+                    posList,
+                    standHistory,
+                    urunHistory
+                };
+                db.collection('sharedData').doc('main').set(state)
+                    .catch(function(err) { console.error('Veri kaydedilemedi (Firestore):', err); });
+            } catch (err) {
+                console.error('Veri kaydedilemedi:', err);
+            }
+        }
+
+        // Firestore'dan gelen veriyi uygulamanın global değişkenlerine uygular.
+        // (Eski loadState() localStorage okuyordu; artık Firestore'un canlı verisini uyguluyor.)
+        function applyStateFromFirestore(state) {
+            try {
+                state = state || {};
+                if (state.urunCategories) urunCategories = state.urunCategories;
+                if (state.activeUrunCategory !== undefined) activeUrunCategory = state.activeUrunCategory;
+                if (state.productPrices) productPrices = state.productPrices;
+                if (state.standList) standList = state.standList;
+                if (state.activeStand !== undefined) activeStand = state.activeStand;
+                if (state.activePosStandFilter !== undefined) activePosStandFilter = state.activePosStandFilter;
+                if (state.posList) posList = state.posList;
+                if (Array.isArray(state.standHistory)) standHistory = state.standHistory;
+                if (Array.isArray(state.urunHistory)) urunHistory = state.urunHistory;
+
+                standHistory.forEach(item => {
+                    if (item.kredi === undefined) {
+                        item.kredi = (item.garanti || 0) + (item.halk || 0);
+                    }
+                });
+            } catch (err) {
+                console.error('Firestore verisi uygulanamadı:', err);
+            }
+        }
+
+        // Tüm görünümleri güncel veriyle yeniden çizer. Hem ilk yüklemede hem de Firestore'dan
+        // gelen her canlı güncellemede (bir arkadaşınızın veri girmesi dahil) çağrılır.
+        function renderEverything() {
+            renderUrunCategoryTabs();
+            renderStandButtons();
+            renderPosStandNav();
+            renderPosSelectOptions();
+            renderStandHistory();
+            renderUrunHistory();
+            renderSettingsView();
+            switchTab(currentTab);
+        }
+
+        function clearAllSavedData() {
+            if (confirm('Tüm kayıtlı veriler HERKES için (tüm cihaz ve arkadaşlarınızda) kalıcı olarak silinecek. Emin misiniz?')) {
+                db.collection('sharedData').doc('main').delete()
+                    .then(function() { location.reload(); })
+                    .catch(function(err) {
+                        console.error('Veri silinemedi:', err);
+                        alert('Veri silinirken bir hata oluştu.');
+                    });
+            }
+        }
+
+        function exportAllDataToExcel() {
+            try {
+                const wb = XLSX.utils.book_new();
+
+                const urunRows = urunHistory.map(r => ({
+                    'Kategori': r.category,
+                    'Ürün Adı': r.product,
+                    'Tarih': r.date,
+                    'Adet': r.salesCount,
+                    'Satış Anındaki Birim Fiyat': r.unitPrice !== undefined ? r.unitPrice : (productPrices[r.product] || 0)
+                }));
+                XLSX.utils.book_append_sheet(wb,
+                    XLSX.utils.json_to_sheet(urunRows.length ? urunRows : [{ 'Kategori': '', 'Ürün Adı': '', 'Tarih': '', 'Adet': '' }]),
+                    'UrunGecmisi');
+
+                const standRows = standHistory.map(r => ({
+                    'Stand': r.stand,
+                    'POS': r.pos,
+                    'Tarih': r.date,
+                    'Nakit': r.nakit,
+                    'Kredi': r.kredi !== undefined ? r.kredi : ((r.garanti || 0) + (r.halk || 0))
+                }));
+                XLSX.utils.book_append_sheet(wb,
+                    XLSX.utils.json_to_sheet(standRows.length ? standRows : [{ 'Stand': '', 'POS': '', 'Tarih': '', 'Nakit': '', 'Kredi': '' }]),
+                    'StandGecmisi');
+
+                const kategoriRows = [];
+                Object.keys(urunCategories).forEach(cat => {
+                    const prods = urunCategories[cat] || [];
+                    if (prods.length === 0) {
+                        kategoriRows.push({ 'Kategori': cat, 'Ürün Adı': '', 'Ürün Fiyatı': 0 });
+                    } else {
+                        prods.forEach(p => kategoriRows.push({
+                            'Kategori': cat,
+                            'Ürün Adı': p,
+                            'Ürün Fiyatı': productPrices[p] || 0
+                        }));
+                    }
+                });
+                XLSX.utils.book_append_sheet(wb,
+                    XLSX.utils.json_to_sheet(kategoriRows.length ? kategoriRows : [{ 'Kategori': '', 'Ürün Adı': '', 'Ürün Fiyatı': 0 }]),
+                    'Kategoriler');
+
+                XLSX.utils.book_append_sheet(wb,
+                    XLSX.utils.json_to_sheet((standList.length ? standList : ['']).map(s => ({ 'Stand Adı': s }))),
+                    'Standlar');
+
+                XLSX.utils.book_append_sheet(wb,
+                    XLSX.utils.json_to_sheet((posList.length ? posList : ['']).map(p => ({ 'POS Adı': p }))),
+                    'POSCihazlari');
+
+                XLSX.writeFile(wb, `KAAN_Yedek_${TODAY_STR}.xlsx`);
+                showToast('Tüm veriler Excel dosyasına aktarıldı.');
+            } catch (err) {
+                console.error(err);
+                showToast('Excel dosyası oluşturulurken bir hata oluştu.');
+            }
+        }
+
+        function setupBackupDropzoneEvents() {
+            const zone = document.getElementById('backupFileDropzone');
+            if (!zone) return;
+            ['dragenter', 'dragover'].forEach(evt => {
+                zone.addEventListener(evt, (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    zone.classList.add('border-amber-400', 'bg-amber-50/40');
+                });
+            });
+            ['dragleave', 'drop'].forEach(evt => {
+                zone.addEventListener(evt, (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    zone.classList.remove('border-amber-400', 'bg-amber-50/40');
+                });
+            });
+            zone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files && files.length > 0) processBackupExcelFile(files[0]);
+            });
+        }
+
+        function handleBackupFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) processBackupExcelFile(file);
+            e.target.value = '';
+        }
+
+        function showBackupDropzoneState(state) {
+            const idle = document.getElementById('backupDropzoneIdle');
+            const success = document.getElementById('backupDropzoneSuccess');
+            const error = document.getElementById('backupDropzoneError');
+            if (idle) idle.classList.toggle('hidden', state !== 'idle');
+            if (success) success.classList.toggle('hidden', state !== 'success');
+            if (error) error.classList.toggle('hidden', state !== 'error');
+        }
+
+        function resetBackupDropzone() {
+            showBackupDropzoneState('idle');
+        }
+
+        function showBackupDropzoneError(msg) {
+            const el = document.getElementById('backupDropzoneErrorText');
+            if (el) el.textContent = msg;
+            showBackupDropzoneState('error');
+        }
+
+        function processBackupExcelFile(file) {
+            if (!/\.(xlsx|xls)$/i.test(file.name)) {
+                showBackupDropzoneError('Lütfen .xlsx formatında bir yedek dosyası seçin.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: false });
+                    importBackupWorkbook(workbook, file.name);
+                } catch (err) {
+                    console.error(err);
+                    showBackupDropzoneError('Dosya okunurken bir hata oluştu.');
+                }
+            };
+            reader.onerror = function() {
+                showBackupDropzoneError('Dosya okunamadı.');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function importBackupWorkbook(workbook, fileName) {
+            const sheetNames = workbook.SheetNames;
+            const expectedSheets = ['UrunGecmisi', 'StandGecmisi', 'Kategoriler', 'Standlar', 'POSCihazlari'];
+            const hasExpectedSheets = expectedSheets.some(name => sheetNames.includes(name));
+
+            if (!hasExpectedSheets) {
+                showBackupDropzoneError('Geçersiz yedek dosyası.');
+                return;
+            }
+
+            if (!confirm('Bu işlem tüm verilerin üzerine yazacak. Yüklensin mi?')) return;
+
+            const getSheetRows = (name) => {
+                if (!sheetNames.includes(name)) return [];
+                return XLSX.utils.sheet_to_json(workbook.Sheets[name], { defval: '' });
+            };
+
+            const newUrunCategories = {};
+            const newProductPrices = {};
+            getSheetRows('Kategoriler').forEach(row => {
+                const cat = String(row['Kategori'] || '').trim();
+                const prod = String(row['Ürün Adı'] || '').trim();
+                const price = parseFloat(row['Ürün Fiyatı']) || 0;
+                if (!cat) return;
+                if (!newUrunCategories[cat]) newUrunCategories[cat] = [];
+                if (prod && !newUrunCategories[cat].includes(prod)) newUrunCategories[cat].push(prod);
+                if (prod) newProductPrices[prod] = price;
+            });
+
+            const newStandList = getSheetRows('Standlar').map(r => String(r['Stand Adı'] || '').trim()).filter(Boolean);
+            const newPosList = getSheetRows('POSCihazlari').map(r => String(r['POS Adı'] || '').trim()).filter(Boolean);
+
+            const newUrunHistory = [];
+            getSheetRows('UrunGecmisi').forEach((row, idx) => {
+                const category = String(row['Kategori'] || '').trim();
+                const product = String(row['Ürün Adı'] || '').trim();
+                const count = parseInt(row['Adet']);
+                if (!category || !product || isNaN(count) || count <= 0) return;
+
+                const parsedDate = parseDateValue(row['Tarih']);
+                const rawUnitPrice = row['Satış Anındaki Birim Fiyat'];
+                const parsedUnitPrice = parseFloat(rawUnitPrice);
+                newUrunHistory.push({
+                    id: Date.now() + idx,
+                    category,
+                    product,
+                    date: parsedDate || String(row['Tarih'] || TODAY_STR),
+                    salesCount: count,
+                    unitPrice: (rawUnitPrice !== undefined && rawUnitPrice !== '' && !isNaN(parsedUnitPrice))
+                        ? parsedUnitPrice
+                        : (newProductPrices[product] !== undefined ? newProductPrices[product] : 0)
+                });
+
+                if (!newUrunCategories[category]) newUrunCategories[category] = [];
+                if (!newUrunCategories[category].includes(product)) newUrunCategories[category].push(product);
+            });
+
+            const newStandHistory = [];
+            getSheetRows('StandGecmisi').forEach((row, idx) => {
+                const stand = String(row['Stand'] || '').trim();
+                const pos = String(row['POS'] || '').trim();
+                if (!stand || !pos) return;
+
+                const nakit = parseFloat(row['Nakit']) || 0;
+                let kredi;
+                if (row['Kredi'] !== undefined) {
+                    kredi = parseFloat(row['Kredi']) || 0;
+                } else {
+                    const garanti = parseFloat(row['Garanti']) || 0;
+                    const halk = parseFloat(row['Halk Bank']) || 0;
+                    kredi = garanti + halk;
+                }
+                if (nakit === 0 && kredi === 0) return;
+
+                const parsedDate = parseDateValue(row['Tarih']);
+                newStandHistory.push({
+                    id: Date.now() + 100000 + idx,
+                    stand,
+                    pos,
+                    date: parsedDate || String(row['Tarih'] || TODAY_STR),
+                    nakit, kredi
+                });
+
+                if (!newStandList.includes(stand)) newStandList.push(stand);
+                if (!newPosList.includes(pos)) newPosList.push(pos);
+            });
+
+            urunCategories = Object.keys(newUrunCategories).length ? newUrunCategories : { 'İçecek': [] };
+            activeUrunCategory = 'Tümü';
+            productPrices = newProductPrices;
+            standList = newStandList.length ? newStandList : ['Stand-1'];
+            activeStand = standList[0] || '';
+            posList = newPosList.length ? newPosList : ['POS-1'];
+            urunHistory = newUrunHistory;
+            standHistory = newStandHistory;
+
+            saveState();
+
+            const stText = document.getElementById('backupDropzoneSuccessText');
+            const stSub = document.getElementById('backupDropzoneSuccessSub');
+            if (stText) stText.textContent = `"${fileName}" yüklendi.`;
+            if (stSub) stSub.textContent = `${newUrunHistory.length} ürün kaydı, ${newStandHistory.length} stand kaydı aktarıldı.`;
+            showBackupDropzoneState('success');
+
+            refreshAllViewsAfterRestore();
+            showToast('Yedek dosyasından veriler yüklendi.');
+        }
+
+        function refreshAllViewsAfterRestore() {
+            renderUrunCategoryTabs();
+            renderStandButtons();
+            renderPosSelectOptions();
+            renderUrunHistory();
+            renderStandHistory();
+            renderUrunlerView();
+            renderCiroOraniTable();
+            renderPieCategoryNav();
+            renderPosStandNav();
+            renderCharts();
+            renderPosCharts();
+            renderOdemeTable();
+            updatePanelStats();
+            renderPanelCharts();
+        }
+
+        let chartGunlukInstance = null;
+        let chartToplamInstance = null;
+        let chartUrunBarInstance = null;
+        let chartPanelToplamCiroInstance = null;
+        let chartPanelToplamCiroKumulatifInstance = null;
+        let chartPanelOdemeSekliInstance = null;
+        let panelOdemeSekliMode = 'gunluk';
+        let ciroCategoryFilterValue = 'Tümü';
+        let ciroOraniTableMode = 'toplam';
+        let chartPosGunlukInstance = null;
+        let chartPosToplamInstance = null;
+        let chartPosBarInstance = null;
+
+        function renderUrunCategoryTabs() {
+            const container = document.getElementById('urunVeriCategoryContainer');
+            if (!container) return;
+
+            const cats = Object.keys(urunCategories);
+            if (cats.length > 0 && activeUrunCategory !== 'Tümü' && !cats.includes(activeUrunCategory)) {
+                activeUrunCategory = cats[0];
+            }
+
+            container.innerHTML = cats.map(cat => {
+                const isActive = (cat === activeUrunCategory);
+                return `
+                    <button onclick="setUrunVeriCategory('${cat}')" class="px-3 py-1.5 text-xs font-semibold rounded-xl transition-all ${isActive ? 'bg-amber-500 text-stone-900 shadow-sm' : 'bg-stone-200 text-stone-700 hover:bg-stone-300'}">${cat}</button>
+                `;
+            }).join('');
+
+            renderUrunSelectOptions();
+            saveState();
+        }
+
+        function setUrunVeriCategory(cat) {
+            activeUrunCategory = cat;
+            renderUrunCategoryTabs();
+        }
+
+        function renderUrunSelectOptions() {
+            const select = document.getElementById('urunSelect');
+            if (!select) return;
+
+            let prods = [];
+            if (activeUrunCategory === 'Tümü' || !urunCategories[activeUrunCategory]) {
+                Object.keys(urunCategories).forEach(c => {
+                    prods = prods.concat(urunCategories[c] || []);
+                });
+            } else {
+                prods = urunCategories[activeUrunCategory] || [];
+            }
+
+            if (prods.length === 0) {
+                select.innerHTML = '<option value="">-- Ürün Bulunmuyor --</option>';
+            } else {
+                select.innerHTML = prods.map(p => `<option value="${p}">${p}</option>`).join('');
+            }
+        }
+
+        function saveUrunEntry() {
+            const dateEl = document.getElementById('urunInputDate');
+            const selectEl = document.getElementById('urunSelect');
+            const countEl = document.getElementById('urunCountInput');
+
+            const dateVal = (dateEl && dateEl.value) || TODAY_STR;
+            const prodVal = selectEl ? selectEl.value : '';
+            const countVal = countEl ? (parseInt(countEl.value) || 0) : 0;
+
+            if (!prodVal) {
+                showToast('Lütfen bir ürün seçin.');
+                return;
+            }
+            if (countVal <= 0) {
+                showToast('Lütfen geçerli bir satış adedi girin.');
+                return;
+            }
+
+            let foundCategory = 'Genel';
+            Object.keys(urunCategories).forEach(cat => {
+                if ((urunCategories[cat] || []).includes(prodVal)) {
+                    foundCategory = cat;
+                }
+            });
+
+            const newEntry = {
+                id: Date.now(),
+                category: foundCategory,
+                product: prodVal,
+                date: dateVal,
+                salesCount: countVal,
+                unitPrice: productPrices[prodVal] !== undefined ? productPrices[prodVal] : 0
+            };
+
+            urunHistory.unshift(newEntry);
+            if (countEl) countEl.value = '';
+            renderUrunHistory();
+            showToast('Ürün verisi başarıyla kaydedildi!');
+        }
+
+        function deleteUrunEntry(id) {
+            urunHistory = urunHistory.filter(item => item.id !== id);
+            renderUrunHistory();
+            showToast('Kayıt silindi.');
+        }
+
+        function renderUrunHistory() {
+            const tbody = document.getElementById('urunHistoryTableBody');
+            if (!tbody) return;
+
+            saveState();
+
+            const filterEl = document.getElementById('urunFilterDate');
+            const filterDate = filterEl ? filterEl.value : '';
+            let list = urunHistory;
+            if (filterDate) {
+                list = list.filter(i => i.date === filterDate);
+            }
+
+            if (list.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="p-6 text-center text-stone-400 font-medium">Henüz ürün verisi girilmedi.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = list.map((row, idx) => `
+                <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-stone-50/50'} hover:bg-stone-100/60 transition-colors">
+                    <td class="p-3 text-center">
+                        <button onclick="deleteUrunEntry(${row.id})" class="text-stone-400 hover:text-red-600 transition-colors">
+                            <i class="fa-solid fa-circle-minus text-sm"></i>
+                        </button>
+                    </td>
+                    <td class="p-3 font-semibold text-stone-800">${row.category}</td>
+                    <td class="p-3 text-stone-700">${row.product}</td>
+                    <td class="p-3 text-stone-500 font-mono">${row.date}</td>
+                    <td class="p-3 font-bold text-amber-600 text-right">${row.salesCount} Adet</td>
+                </tr>
+            `).join('');
+        }
+
+        function clearUrunFilterDate() {
+            setInputValue('urunFilterDate', '');
+            renderUrunHistory();
+        }
+
+        function sortCiroColumn(column) {
+            if (ciroSortColumn === column) {
+                ciroSortDir = (ciroSortDir === 'desc') ? 'asc' : 'desc';
+            } else {
+                ciroSortColumn = column;
+                ciroSortDir = 'desc';
+            }
+            renderCiroOraniTable();
+        }
+
+        function setCiroCategoryFilter(cat) {
+            ciroCategoryFilterValue = cat;
+            renderCiroOraniTable();
+        }
+
+        function updateCiroSortArrows() {
+            ['sold', 'price', 'revenue', 'salesPercent', 'revenuePercent'].forEach(col => {
+                const el = document.getElementById(`ciroArrow-${col}`);
+                if (!el) return;
+                if (ciroSortColumn === col) {
+                    el.textContent = ciroSortDir === 'desc' ? ' ▼' : ' ▲';
+                    el.classList.add('text-amber-600');
+                } else {
+                    el.textContent = '';
+                    el.classList.remove('text-amber-600');
+                }
+            });
+        }
+
+        function setStatText(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        }
+
+        function computeUrunCiroStats(historyItems) {
+            const salesCountMap = {};
+            const revenueMap = {};
+
+            historyItems.forEach(item => {
+                salesCountMap[item.product] = (salesCountMap[item.product] || 0) + item.salesCount;
+                const priceAtSaleTime = (item.unitPrice !== undefined && item.unitPrice !== null)
+                    ? item.unitPrice
+                    : (productPrices[item.product] || 0);
+                revenueMap[item.product] = (revenueMap[item.product] || 0) + (item.salesCount * priceAtSaleTime);
+            });
+
+            let totalSold = 0;
+            let totalRevenue = 0;
+            Object.keys(salesCountMap).forEach(p => { totalSold += salesCountMap[p]; });
+            Object.keys(revenueMap).forEach(p => { totalRevenue += revenueMap[p]; });
+
+            let topSold = { name: '-', value: 0 };
+            let leastSold = { name: '-', value: 0 };
+            let topRevenue = { name: '-', value: 0 };
+            let leastRevenue = { name: '-', value: 0 };
+
+            Object.keys(salesCountMap).forEach(p => {
+                const v = salesCountMap[p];
+                if (v <= 0) return;
+                if (v > topSold.value) topSold = { name: p, value: v };
+                if (leastSold.name === '-' || v < leastSold.value) leastSold = { name: p, value: v };
+            });
+
+            Object.keys(revenueMap).forEach(p => {
+                const v = revenueMap[p];
+                if (v <= 0) return;
+                if (v > topRevenue.value) topRevenue = { name: p, value: v };
+                if (leastRevenue.name === '-' || v < leastRevenue.value) leastRevenue = { name: p, value: v };
+            });
+
+            return { salesCountMap, revenueMap, totalSold, totalRevenue, topSold, leastSold, topRevenue, leastRevenue };
+        }
+
+        function setCiroOraniTableMode(mode) {
+            ciroOraniTableMode = mode;
+            renderCiroOraniTable();
+        }
+
+        function updateCiroTableModeButtons() {
+            ['gunluk', 'toplam'].forEach(m => {
+                const btn = document.getElementById('ciroTableModeBtn-' + m);
+                if (!btn) return;
+                if (m === ciroOraniTableMode) {
+                    btn.className = 'px-4 py-2 text-xs font-semibold rounded-lg transition-all bg-amber-500 text-stone-900 shadow-sm';
+                } else {
+                    btn.className = 'px-4 py-2 text-xs font-semibold rounded-lg transition-all text-stone-600 hover:text-stone-900';
+                }
+            });
+        }
+
+        function renderCiroOraniTable() {
+            const tbody = document.getElementById('ciroOraniTableBody');
+            const tfoot = document.getElementById('ciroOraniTableFoot');
+            const catNavContainer = document.getElementById('ciroCategoryNav');
+            const searchInput = document.getElementById('ciroSearchInput');
+            const dateInput = document.getElementById('ciroOraniDateInput');
+
+            if (!tbody || !tfoot) return;
+
+            if (dateInput && !dateInput.value) {
+                dateInput.value = TODAY_STR;
+            }
+            const selectedDate = dateInput ? dateInput.value : TODAY_STR;
+
+            const cats = Object.keys(urunCategories);
+            const navCats = ['Tümü', ...cats];
+            if (!navCats.includes(ciroCategoryFilterValue)) {
+                ciroCategoryFilterValue = 'Tümü';
+            }
+
+            if (catNavContainer) {
+                catNavContainer.innerHTML = navCats.map(cat => {
+                    const isActive = (cat === ciroCategoryFilterValue);
+                    const label = (cat === 'Tümü') ? 'Tüm Kategoriler' : cat;
+                    return `
+                        <button onclick="setCiroCategoryFilter('${cat}')" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all ${isActive ? 'bg-amber-500 text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900'}">${label}</button>
+                    `;
+                }).join('');
+            }
+
+            const currentFilter = ciroCategoryFilterValue;
+            const searchQuery = searchInput ? searchInput.value.trim().toLocaleLowerCase('tr') : '';
+
+            const dailyHistory = urunHistory.filter(i => i.date === selectedDate);
+            const totalStats = computeUrunCiroStats(urunHistory);
+            const dailyStats = computeUrunCiroStats(dailyHistory);
+
+            setStatText('ciroTotalSoldUnits', `${totalStats.totalSold.toLocaleString('tr-TR')}`);
+            setStatText('ciroDailySoldUnits', `${dailyStats.totalSold.toLocaleString('tr-TR')}`);
+            setStatText('ciroTotalCalculatedRevenue', `₺${totalStats.totalRevenue.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+            setStatText('ciroDailyCalculatedRevenue', `₺${dailyStats.totalRevenue.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+
+            setStatText('ciroTopSoldProduct', totalStats.topSold.value > 0 ? `${totalStats.topSold.name} (${totalStats.topSold.value} ad.)` : '-');
+            setStatText('ciroTopSoldProductDaily', dailyStats.topSold.value > 0 ? `${dailyStats.topSold.name} (${dailyStats.topSold.value} ad.)` : '-');
+            setStatText('ciroLeastSoldProduct', totalStats.leastSold.value > 0 ? `${totalStats.leastSold.name} (${totalStats.leastSold.value} ad.)` : '-');
+            setStatText('ciroLeastSoldProductDaily', dailyStats.leastSold.value > 0 ? `${dailyStats.leastSold.name} (${dailyStats.leastSold.value} ad.)` : '-');
+
+            setStatText('ciroTopRevenueProduct', totalStats.topRevenue.value > 0 ? `${totalStats.topRevenue.name} (₺${totalStats.topRevenue.value.toLocaleString('tr-TR')})` : '-');
+            setStatText('ciroTopRevenueProductDaily', dailyStats.topRevenue.value > 0 ? `${dailyStats.topRevenue.name} (₺${dailyStats.topRevenue.value.toLocaleString('tr-TR')})` : '-');
+            setStatText('ciroLeastRevenueProduct', totalStats.leastRevenue.value > 0 ? `${totalStats.leastRevenue.name} (₺${totalStats.leastRevenue.value.toLocaleString('tr-TR')})` : '-');
+            setStatText('ciroLeastRevenueProductDaily', dailyStats.leastRevenue.value > 0 ? `${dailyStats.leastRevenue.name} (₺${dailyStats.leastRevenue.value.toLocaleString('tr-TR')})` : '-');
+
+            const tableHistory = (ciroOraniTableMode === 'gunluk') ? dailyHistory : urunHistory;
+            const tableStats = computeUrunCiroStats(tableHistory);
+            const salesCountMap = tableStats.salesCountMap;
+            const revenueMap = tableStats.revenueMap;
+
+            let allProductsList = [];
+            cats.forEach(cat => {
+                (urunCategories[cat] || []).forEach(prod => {
+                    allProductsList.push({ category: cat, name: prod });
+                });
+            });
+
+            const grandTotalSoldUnits = tableStats.totalSold;
+            const grandTotalRevenue = tableStats.totalRevenue;
+
+            let filteredList = allProductsList;
+            if (currentFilter !== 'Tümü') {
+                filteredList = filteredList.filter(i => i.category === currentFilter);
+            }
+            if (searchQuery) {
+                filteredList = filteredList.filter(i => 
+                    i.name.toLocaleLowerCase('tr').includes(searchQuery) || 
+                    i.category.toLocaleLowerCase('tr').includes(searchQuery)
+                );
+            }
+
+            if (filteredList.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="p-8 text-center text-stone-400 font-medium">Görüntülenecek ürün bulunamadı.</td>
+                    </tr>
+                `;
+                tfoot.innerHTML = '';
+                updateCiroTableModeButtons();
+                return;
+            }
+
+            let filterTotalSold = 0;
+            let filterTotalRevenue = 0;
+
+            let rowsData = filteredList.map(item => {
+                const soldCount = salesCountMap[item.name] || 0;
+                const price = productPrices[item.name] !== undefined ? productPrices[item.name] : 0;
+                const revenue = revenueMap[item.name] || 0;
+
+                filterTotalSold += soldCount;
+                filterTotalRevenue += revenue;
+
+                const salesPercent = grandTotalSoldUnits > 0 ? ((soldCount / grandTotalSoldUnits) * 100) : 0;
+                const revenuePercent = grandTotalRevenue > 0 ? ((revenue / grandTotalRevenue) * 100) : 0;
+
+                return { name: item.name, category: item.category, soldCount, price, revenue, salesPercent, revenuePercent };
+            });
+
+            if (ciroSortColumn) {
+                const colKeyMap = {
+                    sold: 'soldCount',
+                    price: 'price',
+                    revenue: 'revenue',
+                    salesPercent: 'salesPercent',
+                    revenuePercent: 'revenuePercent'
+                };
+                const key = colKeyMap[ciroSortColumn];
+                if (key) {
+                    rowsData.sort((a, b) => ciroSortDir === 'desc' ? (b[key] - a[key]) : (a[key] - b[key]));
+                }
+            }
+
+            tbody.innerHTML = rowsData.map((row, idx) => {
+                return `
+                    <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-stone-50/50'} hover:bg-amber-50/30 transition-colors">
+                        <td class="p-3.5 font-bold text-stone-800">${row.name}</td>
+                        <td class="p-3.5 text-stone-600">
+                            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-stone-100 border border-stone-200 text-stone-700">${row.category}</span>
+                        </td>
+                        <td class="p-3.5 text-right font-bold text-stone-800">${row.soldCount.toLocaleString('tr-TR')} Adet</td>
+                        <td class="p-3.5 text-center font-bold text-stone-700 font-mono">₺${row.price.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td class="p-3.5 text-right font-black text-amber-700 font-mono">₺${row.revenue.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td class="p-3.5">
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 bg-stone-100 rounded-full h-2 overflow-hidden">
+                                    <div class="bg-amber-500 h-full rounded-full" style="width: ${Math.min(row.salesPercent, 100)}%"></div>
+                                </div>
+                                <span class="text-xs font-mono font-bold text-stone-700 w-12 text-right">%${row.salesPercent.toFixed(1)}</span>
+                            </div>
+                        </td>
+                        <td class="p-3.5">
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 bg-stone-100 rounded-full h-2 overflow-hidden">
+                                    <div class="bg-emerald-600 h-full rounded-full" style="width: ${Math.min(row.revenuePercent, 100)}%"></div>
+                                </div>
+                                <span class="text-xs font-mono font-bold text-emerald-700 w-12 text-right">%${row.revenuePercent.toFixed(1)}</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            updateCiroSortArrows();
+            updateCiroTableModeButtons();
+
+            const filterSalesPercent = grandTotalSoldUnits > 0 ? ((filterTotalSold / grandTotalSoldUnits) * 100) : 0;
+            const filterRevenuePercent = grandTotalRevenue > 0 ? ((filterTotalRevenue / grandTotalRevenue) * 100) : 0;
+
+            tfoot.innerHTML = `
+                <tr>
+                    <td class="p-4" colspan="2">TOPLAM (${filteredList.length} Ürün)</td>
+                    <td class="p-4 text-right font-bold">${filterTotalSold.toLocaleString('tr-TR')} Adet</td>
+                    <td class="p-4 text-center text-stone-400">-</td>
+                    <td class="p-4 text-right font-black text-amber-800 font-mono">₺${filterTotalRevenue.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                    <td class="p-4"><span class="text-xs font-bold font-mono text-amber-900">%${filterSalesPercent.toFixed(1)}</span></td>
+                    <td class="p-4"><span class="text-xs font-bold font-mono text-emerald-900">%${filterRevenuePercent.toFixed(1)}</span></td>
+                </tr>
+            `;
+        }
+
+        function trNormalize(str) {
+            return String(str)
+                .toLocaleLowerCase('tr')
+                .trim()
+                .replace(/ı/g, 'i').replace(/İ/g, 'i')
+                .replace(/ş/g, 's').replace(/ç/g, 'c')
+                .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ö/g, 'o')
+                .replace(/[^a-z0-9]/g, '');
+        }
+
+        function findHeaderKey(row, keywords) {
+            const keys = Object.keys(row);
+            for (const k of keys) {
+                const nk = trNormalize(k);
+                if (keywords.some(kw => nk.includes(kw))) return k;
+            }
+            return null;
+        }
+
+        function pad2(n) { return String(n).padStart(2, '0'); }
+
+        function parseDateValue(val) {
+            if (val instanceof Date && !isNaN(val)) {
+                return `${val.getUTCFullYear()}-${pad2(val.getUTCMonth() + 1)}-${pad2(val.getUTCDate())}`;
+            }
+            if (typeof val === 'number' && typeof XLSX !== 'undefined' && XLSX.SSF) {
+                const d = XLSX.SSF.parse_date_code(val);
+                if (d) return `${d.y}-${pad2(d.m)}-${pad2(d.d)}`;
+            }
+            if (typeof val === 'string') {
+                const s = val.trim();
+                let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+                if (m) return `${m[1]}-${pad2(m[2])}-${pad2(m[3])}`;
+                m = s.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);
+                if (m) return `${m[3]}-${pad2(m[2])}-${pad2(m[1])}`;
+            }
+            return null;
+        }
+
+        function setupDropzoneEvents() {
+            const zone = document.getElementById('fileDropzone');
+            if (!zone) return;
+            ['dragenter', 'dragover'].forEach(evt => {
+                zone.addEventListener(evt, (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    zone.classList.add('border-amber-400', 'bg-amber-50/40');
+                });
+            });
+            ['dragleave', 'drop'].forEach(evt => {
+                zone.addEventListener(evt, (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    zone.classList.remove('border-amber-400', 'bg-amber-50/40');
+                });
+            });
+            zone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files && files.length > 0) processExcelFile(files[0]);
+            });
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) processExcelFile(file);
+            e.target.value = '';
+        }
+
+        function showDropzoneState(state) {
+            const idle = document.getElementById('dropzoneIdle');
+            const success = document.getElementById('dropzoneSuccess');
+            const error = document.getElementById('dropzoneError');
+            if (idle) idle.classList.toggle('hidden', state !== 'idle');
+            if (success) success.classList.toggle('hidden', state !== 'success');
+            if (error) error.classList.toggle('hidden', state !== 'error');
+        }
+
+        function resetDropzone() {
+            showDropzoneState('idle');
+        }
+
+        function showDropzoneError(msg) {
+            const el = document.getElementById('dropzoneErrorText');
+            if (el) el.textContent = msg;
+            showDropzoneState('error');
+        }
+
+        function processExcelFile(file) {
+            if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
+                showDropzoneError('Lütfen .xlsx veya .csv formatında bir dosya seçin.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: false });
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                    importParsedRows(rows, file.name);
+                } catch (err) {
+                    console.error(err);
+                    showDropzoneError('Dosya okunurken bir hata oluştu.');
+                }
+            };
+            reader.onerror = function() {
+                showDropzoneError('Dosya okunamadı.');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function importParsedRows(rows, fileName) {
+            if (!rows || rows.length === 0) {
+                showDropzoneError('Dosyada okunabilir veri bulunamadı.');
+                return;
+            }
+
+            const productKey = findHeaderKey(rows[0], ['urun', 'product', 'isim']);
+            const countKey = findHeaderKey(rows[0], ['adet', 'miktar', 'satisadedi', 'quantity', 'qty', 'count', 'satis']);
+            const priceKey = findHeaderKey(rows[0], ['fiyat', 'fiyati', 'price', 'ucret']);
+            const dateKey = findHeaderKey(rows[0], ['tarih', 'date']);
+            const categoryKey = findHeaderKey(rows[0], ['kategori', 'category', 'baslik']);
+
+            if (!productKey || !countKey) {
+                showDropzoneError('Dosyada "Ürün Adı" ve "Adet" sütunları bulunamadı.');
+                return;
+            }
+
+            const productLookup = {};
+            Object.keys(urunCategories).forEach(cat => {
+                (urunCategories[cat] || []).forEach(p => {
+                    productLookup[trNormalize(p)] = { category: cat, product: p };
+                });
+            });
+
+            const dateEl = document.getElementById('urunInputDate');
+            const fallbackDate = (dateEl && dateEl.value) || TODAY_STR;
+            let importedCount = 0;
+            const newProductNames = [];
+
+            rows.forEach(row => {
+                const rawProduct = row[productKey];
+                const rawCount = row[countKey];
+                if (rawProduct === '' || rawProduct === undefined || rawProduct === null) return;
+
+                const countVal = parseInt(rawCount);
+                if (isNaN(countVal) || countVal <= 0) return;
+
+                const normProduct = trNormalize(rawProduct);
+                let targetCategory, targetProduct;
+
+                if (productLookup[normProduct]) {
+                    targetCategory = productLookup[normProduct].category;
+                    targetProduct = productLookup[normProduct].product;
+                } else {
+                    const catFromFile = categoryKey ? String(row[categoryKey]).trim() : '';
+                    const matchedCatKey = Object.keys(urunCategories).find(c => trNormalize(c) === trNormalize(catFromFile));
+
+                    if (matchedCatKey) {
+                        targetCategory = matchedCatKey;
+                    } else if (catFromFile) {
+                        targetCategory = catFromFile;
+                        if (!urunCategories[targetCategory]) urunCategories[targetCategory] = [];
+                    } else if (activeUrunCategory && activeUrunCategory !== 'Tümü') {
+                        targetCategory = activeUrunCategory;
+                    } else {
+                        targetCategory = 'İçe Aktarılan';
+                        if (!urunCategories[targetCategory]) urunCategories[targetCategory] = [];
+                    }
+
+                    targetProduct = String(rawProduct).trim();
+                    if (!urunCategories[targetCategory].includes(targetProduct)) {
+                        urunCategories[targetCategory].push(targetProduct);
+                        newProductNames.push(targetProduct);
+                    }
+                    productLookup[normProduct] = { category: targetCategory, product: targetProduct };
+                }
+
+                if (priceKey && row[priceKey] !== undefined && row[priceKey] !== '') {
+                    const parsedPrice = parseFloat(row[priceKey]);
+                    if (!isNaN(parsedPrice) && parsedPrice >= 0) {
+                        productPrices[targetProduct] = parsedPrice;
+                    }
+                }
+
+                let entryDate = fallbackDate;
+                if (dateKey && row[dateKey] !== '' && row[dateKey] !== undefined) {
+                    const parsed = parseDateValue(row[dateKey]);
+                    if (parsed) entryDate = parsed;
+                }
+
+                urunHistory.unshift({
+                    id: Date.now() + Math.floor(Math.random() * 100000),
+                    category: targetCategory,
+                    product: targetProduct,
+                    date: entryDate,
+                    salesCount: countVal,
+                    unitPrice: productPrices[targetProduct] !== undefined ? productPrices[targetProduct] : 0
+                });
+                importedCount++;
+            });
+
+            if (importedCount === 0) {
+                showDropzoneError('Dosyadaki satırlar okunamadı.');
+                return;
+            }
+
+            const stText = document.getElementById('dropzoneSuccessText');
+            const stSub = document.getElementById('dropzoneSuccessSub');
+            if (stText) stText.textContent = `"${fileName}" yüklendi.`;
+            if (stSub) stSub.textContent = `${importedCount} satır aktarıldı${newProductNames.length ? `, ${newProductNames.length} yeni ürün eklendi` : ''}.`;
+            showDropzoneState('success');
+
+            renderUrunCategoryTabs();
+            renderUrunHistory();
+            renderCiroOraniTable();
+
+            showToast(`${importedCount} kayıt başarıyla aktarıldı.`);
+        }
+
+        function renderStandButtons() {
+            const container = document.getElementById('standButtonsContainer');
+            if (!container) return;
+
+            if (standList.length > 0 && !standList.includes(activeStand)) {
+                activeStand = standList[0];
+            }
+
+            container.innerHTML = standList.map(st => `
+                <button onclick="selectStand('${st}')" class="px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all ${st === activeStand ? 'bg-amber-500 text-stone-900 shadow-sm' : 'bg-stone-200 text-stone-700 hover:bg-stone-300'}">${st}</button>
+            `).join('');
+
+            const badge = document.getElementById('activeStandBadge');
+            if (badge) badge.textContent = activeStand || 'Stand Yok';
+            saveState();
+        }
+
+        function selectStand(st) {
+            activeStand = st;
+            renderStandButtons();
+        }
+
+        function renderPosSelectOptions() {
+            const select = document.getElementById('standPosSelect');
+            if (!select) return;
+            if (posList.length === 0) {
+                select.innerHTML = '<option value="">-- POS Cihazı Yok --</option>';
+            } else {
+                select.innerHTML = posList.map(p => `<option value="${p}">${p}</option>`).join('');
+            }
+            saveState();
+        }
+
+        function saveStandEntry() {
+            const dateEl = document.getElementById('standInputDate');
+            const posEl = document.getElementById('standPosSelect');
+            const nakitEl = document.getElementById('standNakitInput');
+            const krediEl = document.getElementById('standKrediInput');
+
+            const dateVal = (dateEl && dateEl.value) || TODAY_STR;
+            const posVal = posEl ? posEl.value : 'POS-1';
+            const nakitVal = nakitEl ? (parseFloat(nakitEl.value) || 0) : 0;
+            const krediVal = krediEl ? (parseFloat(krediEl.value) || 0) : 0;
+
+            if (!activeStand) {
+                showToast('Lütfen bir stand ekleyin.');
+                return;
+            }
+
+            const newEntry = {
+                id: Date.now(),
+                stand: activeStand,
+                pos: posVal || 'POS-1',
+                date: dateVal,
+                nakit: nakitVal,
+                kredi: krediVal
+            };
+
+            standHistory.unshift(newEntry);
+
+            if (nakitEl) nakitEl.value = '';
+            if (krediEl) krediEl.value = '';
+
+            renderStandHistory();
+            refreshStandDependentViews();
+            showToast(`${activeStand} verileri kaydedildi!`);
+        }
+
+        function deleteStandEntry(id) {
+            standHistory = standHistory.filter(item => item.id !== id);
+            renderStandHistory();
+            refreshStandDependentViews();
+            showToast('Kayıt silindi.');
+        }
+
+        function refreshStandDependentViews() {
+            const odemeView = document.getElementById('view-odeme');
+            if (odemeView && !odemeView.classList.contains('hidden')) renderOdemeTable();
+
+            const posView = document.getElementById('view-posCihazlari');
+            if (posView && !posView.classList.contains('hidden')) {
+                renderPosStandNav();
+                renderPosCharts();
+            }
+
+            const panelView = document.getElementById('view-panel');
+            if (panelView && !panelView.classList.contains('hidden')) {
+                updatePanelStats();
+                renderPanelCharts();
+            }
+        }
+
+        function renderStandHistory() {
+            const tbody = document.getElementById('standHistoryTableBody');
+            if (!tbody) return;
+
+            saveState();
+
+            const filterEl = document.getElementById('standFilterDate');
+            const filterDate = filterEl ? filterEl.value : '';
+            let list = standHistory;
+            if (filterDate) {
+                list = list.filter(i => i.date === filterDate);
+            }
+
+            if (list.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="p-6 text-center text-stone-400 font-medium">Henüz stand verisi girilmedi.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = list.map((row, idx) => `
+                <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-stone-50/50'} hover:bg-stone-100/50">
+                    <td class="p-3 text-center">
+                        <button onclick="deleteStandEntry(${row.id})" class="text-stone-400 hover:text-red-600 transition-colors">
+                            <i class="fa-solid fa-xmark text-sm"></i>
+                        </button>
+                    </td>
+                    <td class="p-3 font-bold text-stone-800">${row.stand} (${row.pos})</td>
+                    <td class="p-3 text-stone-500 font-mono">${row.date}</td>
+                    <td class="p-3 font-semibold text-amber-600">₺${row.nakit.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                    <td class="p-3 text-stone-700">₺${(row.kredi !== undefined ? row.kredi : ((row.garanti || 0) + (row.halk || 0))).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                </tr>
+            `).join('');
+        }
+
+        function clearStandFilterDate() {
+            setInputValue('standFilterDate', '');
+            renderStandHistory();
+        }
+
+        function setupStandDropzoneEvents() {
+            const zone = document.getElementById('standFileDropzone');
+            if (!zone) return;
+            ['dragenter', 'dragover'].forEach(evt => {
+                zone.addEventListener(evt, (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    zone.classList.add('border-amber-400', 'bg-amber-50/40');
+                });
+            });
+            ['dragleave', 'drop'].forEach(evt => {
+                zone.addEventListener(evt, (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    zone.classList.remove('border-amber-400', 'bg-amber-50/40');
+                });
+            });
+            zone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files && files.length > 0) processStandExcelFile(files[0]);
+            });
+        }
+
+        function handleStandFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) processStandExcelFile(file);
+            e.target.value = '';
+        }
+
+        function showStandDropzoneState(state) {
+            const idle = document.getElementById('standDropzoneIdle');
+            const success = document.getElementById('standDropzoneSuccess');
+            const error = document.getElementById('standDropzoneError');
+            if (idle) idle.classList.toggle('hidden', state !== 'idle');
+            if (success) success.classList.toggle('hidden', state !== 'success');
+            if (error) error.classList.toggle('hidden', state !== 'error');
+        }
+
+        function resetStandDropzone() {
+            showStandDropzoneState('idle');
+        }
+
+        function showStandDropzoneError(msg) {
+            const el = document.getElementById('standDropzoneErrorText');
+            if (el) el.textContent = msg;
+            showStandDropzoneState('error');
+        }
+
+        function processStandExcelFile(file) {
+            if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
+                showStandDropzoneError('Lütfen .xlsx veya .csv formatında bir dosya seçin.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: false });
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                    importStandParsedRows(rows, file.name);
+                } catch (err) {
+                    console.error(err);
+                    showStandDropzoneError('Dosya okunurken bir hata oluştu.');
+                }
+            };
+            reader.onerror = function() {
+                showStandDropzoneError('Dosya okunamadı.');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function importStandParsedRows(rows, fileName) {
+            if (!rows || rows.length === 0) {
+                showStandDropzoneError('Dosyada okunabilir veri bulunamadı.');
+                return;
+            }
+
+            const posKey = findHeaderKey(rows[0], ['pos', 'terminal']);
+            const standKey = findHeaderKey(rows[0], ['stand', 'sube']);
+            const nakitKey = findHeaderKey(rows[0], ['nakit', 'cash']);
+            const krediKey = findHeaderKey(rows[0], ['kredi', 'kart', 'credit']);
+            const garantiKey = findHeaderKey(rows[0], ['garanti']);
+            const halkKey = findHeaderKey(rows[0], ['halk']);
+            const dateKey = findHeaderKey(rows[0], ['tarih', 'date']);
+
+            if (!posKey || (!nakitKey && !krediKey && !garantiKey && !halkKey)) {
+                showStandDropzoneError('Dosyada "POS" ve en az bir ödeme sütunu bulunamadı.');
+                return;
+            }
+
+            const posLookup = {};
+            posList.forEach(p => { posLookup[trNormalize(p)] = p; });
+            const standLookup = {};
+            standList.forEach(s => { standLookup[trNormalize(s)] = s; });
+
+            const dateEl = document.getElementById('standInputDate');
+            const fallbackDate = (dateEl && dateEl.value) || TODAY_STR;
+            const fallbackStand = activeStand || (standList[0] || 'Stand-1');
+
+            let importedCount = 0;
+            rows.forEach(row => {
+                const rawPos = row[posKey];
+                if (rawPos === '' || rawPos === undefined || rawPos === null) return;
+
+                const nakitVal = nakitKey ? (parseFloat(row[nakitKey]) || 0) : 0;
+                let krediVal;
+                if (krediKey) {
+                    krediVal = parseFloat(row[krediKey]) || 0;
+                } else {
+                    const garantiVal = garantiKey ? (parseFloat(row[garantiKey]) || 0) : 0;
+                    const halkVal = halkKey ? (parseFloat(row[halkKey]) || 0) : 0;
+                    krediVal = garantiVal + halkVal;
+                }
+                if (nakitVal === 0 && krediVal === 0) return;
+
+                const normPos = trNormalize(rawPos);
+                let targetPos;
+                if (posLookup[normPos]) {
+                    targetPos = posLookup[normPos];
+                } else {
+                    targetPos = String(rawPos).trim();
+                    if (!posList.includes(targetPos)) posList.push(targetPos);
+                    posLookup[normPos] = targetPos;
+                }
+
+                let targetStand = fallbackStand;
+                if (standKey && row[standKey] !== '' && row[standKey] !== undefined) {
+                    const rawStand = String(row[standKey]).trim();
+                    const normStand = trNormalize(rawStand);
+                    if (standLookup[normStand]) {
+                        targetStand = standLookup[normStand];
+                    } else if (rawStand) {
+                        targetStand = rawStand;
+                        if (!standList.includes(targetStand)) standList.push(targetStand);
+                        standLookup[normStand] = targetStand;
+                    }
+                }
+
+                let entryDate = fallbackDate;
+                if (dateKey && row[dateKey] !== '' && row[dateKey] !== undefined) {
+                    const parsed = parseDateValue(row[dateKey]);
+                    if (parsed) entryDate = parsed;
+                }
+
+                standHistory.unshift({
+                    id: Date.now() + Math.floor(Math.random() * 100000),
+                    stand: targetStand,
+                    pos: targetPos,
+                    date: entryDate,
+                    nakit: nakitVal,
+                    kredi: krediVal
+                });
+                importedCount++;
+            });
+
+            if (importedCount === 0) {
+                showStandDropzoneError('Satırlar okunamadı.');
+                return;
+            }
+
+            const stText = document.getElementById('standDropzoneSuccessText');
+            const stSub = document.getElementById('standDropzoneSuccessSub');
+            if (stText) stText.textContent = `"${fileName}" yüklendi.`;
+            if (stSub) stSub.textContent = `${importedCount} satır aktarıldı.`;
+            showStandDropzoneState('success');
+
+            renderStandButtons();
+            renderPosSelectOptions();
+            renderStandHistory();
+            refreshStandDependentViews();
+
+            showToast(`${importedCount} stand kaydı başarıyla aktarıldı.`);
+        }
+
+        function renderPieCategoryNav() {
+            const cats = ['Tümü', ...Object.keys(urunCategories)];
+            if (!cats.includes(activeUrunCategory)) {
+                activeUrunCategory = 'Tümü';
+            }
+
+            const html = cats.map(cat => {
+                const isActive = (cat === activeUrunCategory);
+                const label = (cat === 'Tümü') ? 'Toplam' : cat;
+                return `
+                    <button onclick="setPieCategory('${cat}')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${isActive ? 'bg-amber-500 text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900'}">${label}</button>
+                `;
+            }).join('');
+
+            ['pieCategoryNav', 'barCategoryNav'].forEach(id => {
+                const container = document.getElementById(id);
+                if (container) container.innerHTML = html;
+            });
+        }
+
+        function setPieCategory(cat) {
+            activeUrunCategory = cat;
+            renderPieCategoryNav();
+            renderCharts();
+        }
+
+        function setUrunGunlukDate(value, sourceId) {
+            ['chartGunlukDate', 'chartGunlukDateBar'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && id !== sourceId) el.value = value;
+            });
+            renderCharts();
+        }
+
+        function setPosGunlukDate(value, sourceId) {
+            ['chartPosGunlukDate', 'chartPosGunlukDateBar'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && id !== sourceId) el.value = value;
+            });
+            renderPosCharts();
+        }
+
+        function renderPosStandNav() {
+            const opts = [...standList, 'Toplam'];
+            if (!opts.includes(activePosStandFilter)) {
+                activePosStandFilter = 'Toplam';
+            }
+
+            const html = opts.map(s => {
+                const isActive = (s === activePosStandFilter);
+                return `
+                    <button onclick="setPosStandFilter('${s}')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${isActive ? 'bg-amber-500 text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900'}">${s}</button>
+                `;
+            }).join('');
+
+            ['posStandNav', 'posStandNavBar'].forEach(id => {
+                const container = document.getElementById(id);
+                if (container) container.innerHTML = html;
+            });
+        }
+
+        function setPosStandFilter(stand) {
+            activePosStandFilter = stand;
+            saveState();
+            renderPosStandNav();
+            renderPosCharts();
+        }
+
+        function renderCharts() {
+            const ctxGunluk = document.getElementById('chartGunluk');
+            const ctxToplam = document.getElementById('chartToplam');
+            const ctxUrunBar = document.getElementById('chartUrunBar');
+            if (!ctxGunluk || !ctxToplam || !ctxUrunBar) return;
+
+            if (chartGunlukInstance) chartGunlukInstance.destroy();
+            if (chartToplamInstance) chartToplamInstance.destroy();
+            if (chartUrunBarInstance) chartUrunBarInstance.destroy();
+
+            const dateEl = document.getElementById('chartGunlukDate');
+            const selectedDate = (dateEl && dateEl.value) || TODAY_STR;
+
+            let currentCatProducts = [];
+            if (activeUrunCategory === 'Tümü') {
+                Object.keys(urunCategories).forEach(cat => {
+                    currentCatProducts = currentCatProducts.concat(urunCategories[cat] || []);
+                });
+            } else {
+                currentCatProducts = urunCategories[activeUrunCategory] || [];
+            }
+
+            const gunlukCounts = {};
+            currentCatProducts.forEach(p => gunlukCounts[p] = 0);
+
+            urunHistory.filter(i => (activeUrunCategory === 'Tümü' || i.category === activeUrunCategory) && i.date === selectedDate).forEach(i => {
+                gunlukCounts[i.product] = (gunlukCounts[i.product] || 0) + i.salesCount;
+            });
+
+            const toplamCounts = {};
+            currentCatProducts.forEach(p => toplamCounts[p] = 0);
+
+            urunHistory.filter(i => activeUrunCategory === 'Tümü' || i.category === activeUrunCategory).forEach(i => {
+                toplamCounts[i.product] = (toplamCounts[i.product] || 0) + i.salesCount;
+            });
+
+            const labels = currentCatProducts;
+            const gunlukData = labels.map(p => gunlukCounts[p] || 0);
+            const toplamData = labels.map(p => toplamCounts[p] || 0);
+
+            const gunlukSum = gunlukData.reduce((a, b) => a + b, 0);
+            const toplamSum = toplamData.reduce((a, b) => a + b, 0);
+
+            const elGunlukText = document.getElementById('gunlukToplamText');
+            const elDonemText = document.getElementById('donemToplamText');
+            if (elGunlukText) elGunlukText.textContent = `${gunlukSum} Adet`;
+            if (elDonemText) elDonemText.textContent = `${toplamSum} Adet`;
+
+            const chartColors = ['#f59e0b', '#0f766e', '#1c1917', '#d97706', '#0284c7', '#84cc16', '#a855f7', '#e11d48', '#059669', '#ca8a04'];
+
+            const commonPieOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: true,
+                        color: '#ffffff',
+                        font: { family: 'Inter', size: 12, weight: '800' },
+                        formatter: (val, ctx) => {
+                            if (!val || val <= 0) return '';
+                            const name = ctx.chart.data.labels[ctx.dataIndex] || '';
+                            return `${name} : ${val}`;
+                        }
+                    }
+                }
+            };
+
+            chartGunlukInstance = new Chart(ctxGunluk, {
+                type: 'pie',
+                data: {
+                    labels: labels.length ? labels : ['Veri Yok'],
+                    datasets: [{
+                        data: gunlukSum > 0 ? gunlukData : [1],
+                        backgroundColor: gunlukSum > 0 ? chartColors.slice(0, labels.length) : ['#e5e7eb'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: commonPieOptions
+            });
+
+            chartToplamInstance = new Chart(ctxToplam, {
+                type: 'pie',
+                data: {
+                    labels: labels.length ? labels : ['Veri Yok'],
+                    datasets: [{
+                        data: toplamSum > 0 ? toplamData : [1],
+                        backgroundColor: toplamSum > 0 ? chartColors.slice(0, labels.length) : ['#e5e7eb'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: commonPieOptions
+            });
+
+            const barDatasets = [];
+            if (urunBarMode === 'all' || urunBarMode === 'gunluk') {
+                barDatasets.push({
+                    label: 'Günlük Satış (Adet)',
+                    data: gunlukData,
+                    backgroundColor: '#f59e0b',
+                    borderRadius: 6
+                });
+            }
+            if (urunBarMode === 'all' || urunBarMode === 'toplam') {
+                barDatasets.push({
+                    label: 'Toplam Satış (Adet)',
+                    data: toplamData,
+                    backgroundColor: '#0f766e',
+                    borderRadius: 6
+                });
+            }
+
+            chartUrunBarInstance = new Chart(ctxUrunBar, {
+                type: 'bar',
+                data: {
+                    labels: labels.length ? labels : ['Ürün Bulunmuyor'],
+                    datasets: barDatasets
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { family: 'Inter', size: 11 } } },
+                        datalabels: {
+                            display: true,
+                            anchor: 'end',
+                            align: 'end',
+                            clamp: true,
+                            color: '#44403c',
+                            font: { family: 'Inter', size: 10, weight: '700' },
+                            formatter: (val) => (val && val > 0) ? `${val}` : ''
+                        }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                        y: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11, weight: '600' } } }
+                    }
+                }
+            });
+        }
+
+        function renderPosCharts() {
+            const ctxGunluk = document.getElementById('chartPosGunluk');
+            const ctxToplam = document.getElementById('chartPosToplam');
+            const ctxPosBar = document.getElementById('chartPosBar');
+            if (!ctxGunluk || !ctxToplam || !ctxPosBar) return;
+
+            if (chartPosGunlukInstance) chartPosGunlukInstance.destroy();
+            if (chartPosToplamInstance) chartPosToplamInstance.destroy();
+            if (chartPosBarInstance) chartPosBarInstance.destroy();
+
+            const dateInput = document.getElementById('chartPosGunlukDate');
+            const selectedDate = (dateInput && dateInput.value) || TODAY_STR;
+
+            const standFilter = activePosStandFilter || 'Toplam';
+            const relevantStandHistory = (standFilter === 'Toplam')
+                ? standHistory
+                : standHistory.filter(item => item.stand === standFilter);
+
+            const gunlukTotals = {};
+            const toplamTotals = {};
+            posList.forEach(p => { gunlukTotals[p] = 0; toplamTotals[p] = 0; });
+
+            relevantStandHistory.forEach(item => {
+                const amount = item.nakit + (item.kredi !== undefined ? item.kredi : ((item.garanti || 0) + (item.halk || 0)));
+                if (!(item.pos in toplamTotals)) toplamTotals[item.pos] = 0;
+                toplamTotals[item.pos] += amount;
+                if (item.date === selectedDate) {
+                    if (!(item.pos in gunlukTotals)) gunlukTotals[item.pos] = 0;
+                    gunlukTotals[item.pos] += amount;
+                }
+            });
+
+            const labels = Object.keys(toplamTotals);
+            const gunlukData = labels.map(p => gunlukTotals[p] || 0);
+            const toplamData = labels.map(p => toplamTotals[p] || 0);
+
+            const gunlukSum = gunlukData.reduce((a, b) => a + b, 0);
+            const toplamSum = toplamData.reduce((a, b) => a + b, 0);
+
+            const elPosGunluk = document.getElementById('posGunlukToplamText');
+            const elPosDonem = document.getElementById('posDonemToplamText');
+            if (elPosGunluk) elPosGunluk.textContent = `₺${gunlukSum.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+            if (elPosDonem) elPosDonem.textContent = `₺${toplamSum.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+
+            const chartColors = ['#f59e0b', '#0f766e', '#1c1917', '#d97706', '#0284c7', '#84cc16', '#a855f7', '#e11d48'];
+
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: true,
+                        color: '#ffffff',
+                        font: { family: 'Inter', size: 12, weight: '800' },
+                        formatter: (val, ctx) => {
+                            if (!val || val <= 0) return '';
+                            const name = ctx.chart.data.labels[ctx.dataIndex] || '';
+                            return `${name}: ₺${val.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`;
+                        }
+                    }
+                }
+            };
+
+            chartPosGunlukInstance = new Chart(ctxGunluk, {
+                type: 'pie',
+                data: {
+                    labels: labels.length ? labels : ['Veri Yok'],
+                    datasets: [{
+                        data: gunlukSum > 0 ? gunlukData : [1],
+                        backgroundColor: gunlukSum > 0 ? chartColors.slice(0, labels.length) : ['#e5e7eb'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: commonOptions
+            });
+
+            chartPosToplamInstance = new Chart(ctxToplam, {
+                type: 'pie',
+                data: {
+                    labels: labels.length ? labels : ['Veri Yok'],
+                    datasets: [{
+                        data: toplamSum > 0 ? toplamData : [1],
+                        backgroundColor: toplamSum > 0 ? chartColors.slice(0, labels.length) : ['#e5e7eb'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: commonOptions
+            });
+
+            const posBarDatasets = [];
+            if (posBarMode === 'all' || posBarMode === 'gunluk') {
+                posBarDatasets.push({
+                    label: 'Günlük Ciro (₺)',
+                    data: gunlukData,
+                    backgroundColor: '#f59e0b',
+                    borderRadius: 6
+                });
+            }
+            if (posBarMode === 'all' || posBarMode === 'toplam') {
+                posBarDatasets.push({
+                    label: 'Toplam Ciro (₺)',
+                    data: toplamData,
+                    backgroundColor: '#0f766e',
+                    borderRadius: 6
+                });
+            }
+
+            chartPosBarInstance = new Chart(ctxPosBar, {
+                type: 'bar',
+                data: {
+                    labels: labels.length ? labels : ['POS Yok'],
+                    datasets: posBarDatasets
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { family: 'Inter', size: 11 } } },
+                        datalabels: {
+                            display: true,
+                            anchor: 'end',
+                            align: 'end',
+                            clamp: true,
+                            color: '#44403c',
+                            font: { family: 'Inter', size: 10, weight: '700' },
+                            formatter: (val) => (val && val > 0) ? `₺${val.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}` : ''
+                        }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                        y: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11, weight: '600' } } }
+                    }
+                }
+            });
+        }
+
+        function renderOdemeTable() {
+            const tbody = document.getElementById('odemeTableBody');
+            if (!tbody) return;
+
+            const filterEl = document.getElementById('odemeFilterDate');
+            const filterDate = filterEl ? filterEl.value : '';
+            const relevantHistory = filterDate ? standHistory.filter(item => item.date === filterDate) : standHistory;
+
+            const groupedByDate = {};
+            relevantHistory.forEach(item => {
+                if (!groupedByDate[item.date]) {
+                    groupedByDate[item.date] = { kredi: 0, nakit: 0 };
+                }
+                const krediVal = item.kredi !== undefined ? item.kredi : ((item.garanti || 0) + (item.halk || 0));
+                groupedByDate[item.date].kredi += krediVal;
+                groupedByDate[item.date].nakit += item.nakit;
+            });
+
+            const dates = Object.keys(groupedByDate).sort().reverse();
+
+            if (dates.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="p-6 text-center text-stone-400 font-medium">${filterDate ? 'Bu tarihte kayıt bulunamadı.' : 'Stand Veri Girişi sayfasından henüz veri eklenmedi.'}</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = dates.map((d, idx) => {
+                const row = groupedByDate[d];
+                const total = row.nakit + row.kredi;
+                return `
+                    <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-stone-50/50'} hover:bg-stone-100/60 transition-colors">
+                        <td class="p-4 font-bold text-stone-800 font-mono">${d}</td>
+                        <td class="p-4 text-stone-700">₺${row.nakit.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td class="p-4 text-stone-700">₺${row.kredi.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td class="p-4 font-bold text-amber-600">₺${total.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            let footerNakit = 0, footerKredi = 0;
+            dates.forEach(d => {
+                footerNakit += groupedByDate[d].nakit;
+                footerKredi += groupedByDate[d].kredi;
+            });
+            const footerTotal = footerNakit + footerKredi;
+            tbody.innerHTML += `
+                <tr class="bg-amber-50/70 font-bold border-t-2 border-amber-200">
+                    <td class="p-4 text-stone-800">Toplam</td>
+                    <td class="p-4 text-stone-800">₺${footerNakit.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                    <td class="p-4 text-stone-800">₺${footerKredi.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                    <td class="p-4 text-amber-700">₺${footerTotal.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                </tr>
+            `;
+        }
+
+        function clearOdemeFilterDate() {
+            setInputValue('odemeFilterDate', '');
+            renderOdemeTable();
+        }
+
+        function renderUrunlerView() {
+            const navContainer = document.getElementById('urunlerCategoryNav');
+            const headerContainer = document.getElementById('urunlerTableHeader');
+            const tbody = document.getElementById('urunlerTableBody');
+
+            if (!navContainer || !headerContainer || !tbody) return;
+
+            const cats = Object.keys(urunCategories);
+            const navCats = ['Tümü', ...cats];
+            if (!navCats.includes(activeUrunCategory)) {
+                activeUrunCategory = 'Tümü';
+            }
+
+            navContainer.innerHTML = navCats.map(cat => {
+                const isActive = (cat === activeUrunCategory);
+                const label = (cat === 'Tümü') ? 'Tüm Kategoriler' : cat;
+                return `
+                    <button onclick="setUrunlerCategory('${cat}')" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all ${isActive ? 'bg-amber-500 text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900'}">${label}</button>
+                `;
+            }).join('');
+
+            let products;
+            let relevantHistory;
+            if (activeUrunCategory === 'Tümü') {
+                products = [];
+                cats.forEach(c => { products = products.concat(urunCategories[c] || []); });
+                relevantHistory = urunHistory;
+            } else {
+                products = urunCategories[activeUrunCategory] || [];
+                relevantHistory = urunHistory.filter(i => i.category === activeUrunCategory);
+            }
+
+            const filterDateEl = document.getElementById('urunlerFilterDate');
+            const filterDate = filterDateEl ? filterDateEl.value : '';
+            if (filterDate) {
+                relevantHistory = relevantHistory.filter(i => i.date === filterDate);
+            }
+
+            const toplamArrow = urunlerToplamSortDir === 'desc' ? ' ▼' : (urunlerToplamSortDir === 'asc' ? ' ▲' : '');
+
+            headerContainer.innerHTML = `
+                <tr>
+                    <th class="p-3.5 border border-stone-200">Tarih</th>
+                    ${products.map(p => `<th class="p-3.5 border border-stone-200">${p}</th>`).join('')}
+                    <th class="p-3.5 border border-stone-200 text-amber-700 font-bold cursor-pointer select-none hover:text-amber-800" onclick="sortUrunlerToplam()">Toplam${toplamArrow}</th>
+                </tr>
+            `;
+
+            const groupedByDate = {};
+            relevantHistory.forEach(i => {
+                if (!groupedByDate[i.date]) groupedByDate[i.date] = {};
+                groupedByDate[i.date][i.product] = (groupedByDate[i.date][i.product] || 0) + i.salesCount;
+            });
+
+            let dates = Object.keys(groupedByDate);
+
+            if (dates.length === 0 || products.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="${products.length + 2}" class="p-6 text-center text-stone-400 font-medium border border-stone-200">${filterDate ? 'Bu tarihte kayıt bulunamadı.' : 'Ürün Veri Girişi sayfasından henüz veri eklenmedi.'}</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const rows = dates.map(d => {
+                let rowSum = 0;
+                products.forEach(p => { rowSum += (groupedByDate[d][p] || 0); });
+                return { date: d, rowSum };
+            });
+
+            if (urunlerToplamSortDir === 'desc') {
+                rows.sort((a, b) => b.rowSum - a.rowSum);
+            } else if (urunlerToplamSortDir === 'asc') {
+                rows.sort((a, b) => a.rowSum - b.rowSum);
+            } else {
+                rows.sort((a, b) => (a.date < b.date ? 1 : (a.date > b.date ? -1 : 0)));
+            }
+
+            tbody.innerHTML = rows.map((row, idx) => {
+                const d = row.date;
+                const prodColsHtml = products.map(p => {
+                    const cnt = groupedByDate[d][p] || 0;
+                    return `<td class="p-3.5 border border-stone-200 font-medium">${cnt}</td>`;
+                }).join('');
+
+                return `
+                    <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-stone-50/50'} hover:bg-stone-100/60 transition-colors">
+                        <td class="p-3.5 border border-stone-200 font-bold text-stone-800 font-mono">${d}</td>
+                        ${prodColsHtml}
+                        <td class="p-3.5 border border-stone-200 font-bold text-amber-600">${row.rowSum}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const colTotals = {};
+            products.forEach(p => { colTotals[p] = 0; });
+            let grandTotal = 0;
+            dates.forEach(d => {
+                products.forEach(p => {
+                    const v = groupedByDate[d][p] || 0;
+                    colTotals[p] += v;
+                    grandTotal += v;
+                });
+            });
+            const footerColsHtml = products.map(p => `<td class="p-3.5 border border-stone-300 font-bold">${colTotals[p]}</td>`).join('');
+            tbody.innerHTML += `
+                <tr class="bg-amber-50/80 font-bold border-t-2 border-amber-300">
+                    <td class="p-3.5 border border-stone-300 text-stone-800">Toplam</td>
+                    ${footerColsHtml}
+                    <td class="p-3.5 border border-stone-300 text-amber-700">${grandTotal}</td>
+                </tr>
+            `;
+        }
+
+        function sortUrunlerToplam() {
+            urunlerToplamSortDir = (urunlerToplamSortDir === 'desc') ? 'asc' : 'desc';
+            renderUrunlerView();
+        }
+
+        function setUrunlerCategory(cat) {
+            activeUrunCategory = cat;
+            renderUrunlerView();
+        }
+
+        function clearUrunlerFilterDate() {
+            setInputValue('urunlerFilterDate', '');
+            renderUrunlerView();
+        }
+
+        function updatePanelStats() {
+            let bugunkuNakit = 0;
+            let bugunkuKredi = 0;
+
+            standHistory.filter(i => i.date === TODAY_STR).forEach(i => {
+                bugunkuNakit += i.nakit;
+                bugunkuKredi += (i.kredi !== undefined ? i.kredi : ((i.garanti || 0) + (i.halk || 0)));
+            });
+
+            const bugunkuCiro = bugunkuNakit + bugunkuKredi;
+
+            let toplamNakit = 0;
+            let toplamKredi = 0;
+
+            standHistory.forEach(i => {
+                toplamNakit += i.nakit;
+                toplamKredi += (i.kredi !== undefined ? i.kredi : ((i.garanti || 0) + (i.halk || 0)));
+            });
+
+            const toplamCiro = toplamNakit + toplamKredi;
+
+            const elBugunkuCiro = document.getElementById('panelBugunkuCiro');
+            const elToplamCiro = document.getElementById('panelToplamCiro');
+            const elBugunkuNakit = document.getElementById('panelBugunkuNakit');
+            const elBugunkuKredi = document.getElementById('panelBugunkuKredi');
+            const elToplamNakit = document.getElementById('panelToplamNakit');
+            const elToplamKredi = document.getElementById('panelToplamKredi');
+
+            if (elBugunkuCiro) elBugunkuCiro.textContent = `₺${bugunkuCiro.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+            if (elToplamCiro) elToplamCiro.textContent = `₺${toplamCiro.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+            if (elBugunkuNakit) elBugunkuNakit.textContent = `₺${bugunkuNakit.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+            if (elBugunkuKredi) elBugunkuKredi.textContent = `₺${bugunkuKredi.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+            if (elToplamNakit) elToplamNakit.textContent = `₺${toplamNakit.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+            if (elToplamKredi) elToplamKredi.textContent = `₺${toplamKredi.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+
+            const bugunkuUrunStats = computeUrunCiroStats(urunHistory.filter(i => i.date === TODAY_STR));
+            const toplamUrunStats = computeUrunCiroStats(urunHistory);
+
+            const elBugunkuUrunCiro = document.getElementById('panelBugunkuUrunCiro');
+            const elToplamUrunCiro = document.getElementById('panelToplamUrunCiro');
+            if (elBugunkuUrunCiro) elBugunkuUrunCiro.textContent = `₺${bugunkuUrunStats.totalRevenue.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+            if (elToplamUrunCiro) elToplamUrunCiro.textContent = `₺${toplamUrunStats.totalRevenue.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+        }
+
+        function renderPanelCharts() {
+            const ctxLine = document.getElementById('chartPanelToplamCiro');
+            const ctxKumulatif = document.getElementById('chartPanelToplamCiroKumulatif');
+            const ctxBar = document.getElementById('chartPanelOdemeSekli');
+            if (!ctxLine || !ctxKumulatif || !ctxBar) return;
+
+            if (chartPanelToplamCiroInstance) chartPanelToplamCiroInstance.destroy();
+            if (chartPanelToplamCiroKumulatifInstance) chartPanelToplamCiroKumulatifInstance.destroy();
+            if (chartPanelOdemeSekliInstance) chartPanelOdemeSekliInstance.destroy();
+
+            const dateMap = {};
+            standHistory.forEach(i => {
+                if (!dateMap[i.date]) {
+                    dateMap[i.date] = { nakit: 0, kredi: 0, total: 0 };
+                }
+                const krediVal = i.kredi !== undefined ? i.kredi : ((i.garanti || 0) + (i.halk || 0));
+                dateMap[i.date].nakit += i.nakit;
+                dateMap[i.date].kredi += krediVal;
+                dateMap[i.date].total += (i.nakit + krediVal);
+            });
+
+            const dates = Object.keys(dateMap).sort();
+            const totals = dates.map(d => dateMap[d].total);
+            const nakitArr = dates.map(d => dateMap[d].nakit);
+            const krediArr = dates.map(d => dateMap[d].kredi);
+
+            let runningSum = 0;
+            const cumulativeTotals = totals.map(t => { runningSum += t; return runningSum; });
+
+            chartPanelToplamCiroInstance = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: dates.length ? dates : ['Veri Yok'],
+                    datasets: [{
+                        label: 'Günlük Ciro',
+                        data: totals.length ? totals : [0],
+                        borderColor: '#f59e0b',
+                        borderWidth: 2.5,
+                        backgroundColor: (context) => {
+                            const ctx = context.chart.ctx;
+                            const gradient = ctx.createLinearGradient(0, 0, 0, 250);
+                            gradient.addColorStop(0, 'rgba(245, 158, 11, 0.45)');
+                            gradient.addColorStop(1, 'rgba(245, 158, 11, 0.01)');
+                            return gradient;
+                        },
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            chartPanelToplamCiroKumulatifInstance = new Chart(ctxKumulatif, {
+                type: 'line',
+                data: {
+                    labels: dates.length ? dates : ['Veri Yok'],
+                    datasets: [{
+                        label: 'Toplam Ciro',
+                        data: cumulativeTotals.length ? cumulativeTotals : [0],
+                        borderColor: '#0f766e',
+                        borderWidth: 2.5,
+                        backgroundColor: (context) => {
+                            const ctx = context.chart.ctx;
+                            const gradient = ctx.createLinearGradient(0, 0, 0, 250);
+                            gradient.addColorStop(0, 'rgba(15, 118, 110, 0.45)');
+                            gradient.addColorStop(1, 'rgba(15, 118, 110, 0.01)');
+                            return gradient;
+                        },
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            const dateInput = document.getElementById('panelOdemeSekliDate');
+            let odemeLabels, odemeKredi, odemeNakit;
+
+            if (panelOdemeSekliMode === 'gunluk') {
+                let selectedDate = dateInput ? dateInput.value : '';
+                if (!selectedDate) {
+                    selectedDate = TODAY_STR;
+                    if (dateInput) dateInput.value = TODAY_STR;
+                }
+                const dayData = dateMap[selectedDate] || { nakit: 0, kredi: 0 };
+                odemeLabels = [selectedDate];
+                odemeKredi = [dayData.kredi];
+                odemeNakit = [dayData.nakit];
+            } else if (panelOdemeSekliMode === 'toplam') {
+                let sumNakit = 0, sumKredi = 0;
+                dates.forEach(d => { sumNakit += dateMap[d].nakit; sumKredi += dateMap[d].kredi; });
+                odemeLabels = ['Toplam'];
+                odemeKredi = [sumKredi];
+                odemeNakit = [sumNakit];
+            } else {
+                odemeLabels = dates.length ? dates : ['Veri Yok'];
+                odemeKredi = krediArr.length ? krediArr : [0];
+                odemeNakit = nakitArr.length ? nakitArr : [0];
+            }
+
+            chartPanelOdemeSekliInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: odemeLabels,
+                    datasets: [
+                        {
+                            label: 'Kredi',
+                            data: odemeKredi,
+                            backgroundColor: '#f59e0b',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Nakit',
+                            data: odemeNakit,
+                            backgroundColor: '#0f766e',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            display: true,
+                            anchor: 'end',
+                            align: 'end',
+                            clamp: true,
+                            color: '#44403c',
+                            font: { family: 'Inter', size: 10, weight: '700' },
+                            formatter: (val) => (val && val > 0) ? `₺${val.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}` : ''
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            updatePanelOdemeModeButtons();
+        }
+
+        function setPanelOdemeSekliMode(mode) {
+            panelOdemeSekliMode = mode;
+            renderPanelCharts();
+        }
+
+        function updatePanelOdemeModeButtons() {
+            const modeLabels = { gunluk: 'gunluk', toplam: 'toplam', tumGunler: 'tumGunler' };
+            Object.keys(modeLabels).forEach(m => {
+                const btn = document.getElementById('panelOdemeModeBtn-' + m);
+                if (!btn) return;
+                if (m === panelOdemeSekliMode) {
+                    btn.className = 'px-4 py-2 text-xs font-semibold rounded-lg transition-all bg-amber-500 text-stone-900 shadow-sm';
+                } else {
+                    btn.className = 'px-4 py-2 text-xs font-semibold rounded-lg transition-all text-stone-600 hover:text-stone-900';
+                }
+            });
+            const dateInput = document.getElementById('panelOdemeSekliDate');
+            if (dateInput) dateInput.disabled = (panelOdemeSekliMode !== 'gunluk');
+        }
+
+        function updateProductPrice(productName, newPrice) {
+            const val = parseFloat(newPrice);
+            if (!isNaN(val) && val >= 0) {
+                productPrices[productName] = val;
+            } else {
+                productPrices[productName] = 0;
+            }
+            saveState();
+            renderCiroOraniTable();
+        }
+
+        function renderSettingsView() {
+            const catSelect = document.getElementById('settingCategorySelect');
+            const newCatInput = document.getElementById('settingNewCategoryInput');
+            const prodTableBody = document.getElementById('settingProductTableBody');
+            const posChips = document.getElementById('settingPosChipsContainer');
+            const standChips = document.getElementById('settingStandChipsContainer');
+            const totalCountBadge = document.getElementById('settingTotalProductCount');
+
+            if (!catSelect || !prodTableBody) return;
+
+            const cats = Object.keys(urunCategories);
+            let catOptions = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+            catOptions += `<option value="__NEW__">+ Yeni Kategori Oluştur...</option>`;
+            catSelect.innerHTML = catOptions;
+
+            if (catSelect.value !== '__NEW__' && newCatInput) {
+                newCatInput.classList.add('hidden');
+                newCatInput.value = '';
+            }
+
+            if (posChips) {
+                if (posList.length === 0) {
+                    posChips.innerHTML = '<span class="text-xs text-stone-400">Henüz POS eklenmedi.</span>';
+                } else {
+                    posChips.innerHTML = posList.map(p => `
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold rounded-xl">
+                            <i class="fa-solid fa-cash-register text-[10px]"></i> ${p}
+                            <button onclick="deletePosFromSettings('${p}')" class="text-teal-600 hover:text-red-600 ml-1"><i class="fa-solid fa-xmark text-xs"></i></button>
+                        </span>
+                    `).join('');
+                }
+            }
+
+            if (standChips) {
+                if (standList.length === 0) {
+                    standChips.innerHTML = '<span class="text-xs text-stone-400">Henüz stand eklenmedi.</span>';
+                } else {
+                    standChips.innerHTML = standList.map(s => `
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold rounded-xl">
+                            <i class="fa-solid fa-store text-[10px]"></i> ${s}
+                            <button onclick="deleteStandFromSettings('${s}')" class="text-amber-700 hover:text-red-600 ml-1"><i class="fa-solid fa-xmark text-xs"></i></button>
+                        </span>
+                    `).join('');
+                }
+            }
+
+            let allProds = [];
+            cats.forEach(c => {
+                (urunCategories[c] || []).forEach(p => {
+                    allProds.push({
+                        category: c,
+                        name: p,
+                        price: productPrices[p] || 0
+                    });
+                });
+            });
+
+            if (totalCountBadge) totalCountBadge.textContent = `${allProds.length} Ürün`;
+
+            if (allProds.length === 0) {
+                prodTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="p-6 text-center text-stone-400 font-medium">Sistemde tanımlı ürün bulunmuyor.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            prodTableBody.innerHTML = allProds.map((item, idx) => `
+                <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-stone-50/50'} hover:bg-amber-50/30 transition-colors">
+                    <td class="p-3.5 font-semibold text-stone-700">
+                        <span class="px-2.5 py-0.5 rounded-full text-[11px] bg-stone-100 border border-stone-200">${item.category}</span>
+                    </td>
+                    <td class="p-3.5 font-bold text-stone-800">${item.name}</td>
+                    <td class="p-3.5 text-center">
+                        <div class="inline-flex items-center gap-1 bg-stone-50 border border-stone-300 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-amber-500 max-w-[120px] mx-auto">
+                            <span class="text-stone-400 font-bold text-xs">₺</span>
+                            <input type="number" step="0.5" min="0" value="${item.price}" onchange="updateProductPrice('${item.name}', this.value)" class="w-full bg-transparent text-xs font-bold text-stone-800 text-right focus:outline-none">
+                        </div>
+                    </td>
+                    <td class="p-3.5 text-center">
+                        <button onclick="deleteProductFromSettings('${item.category}', '${item.name}')" class="text-stone-400 hover:text-red-600 transition-colors p-1" title="Ürünü Sil">
+                            <i class="fa-solid fa-trash-can text-sm"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function toggleNewCategoryInput(val) {
+            const newCatInput = document.getElementById('settingNewCategoryInput');
+            if (!newCatInput) return;
+            if (val === '__NEW__') {
+                newCatInput.classList.remove('hidden');
+                newCatInput.focus();
+            } else {
+                newCatInput.classList.add('hidden');
+                newCatInput.value = '';
+            }
+        }
+
+        function saveProductFromSettings() {
+            const catSelect = document.getElementById('settingCategorySelect');
+            const newCatInput = document.getElementById('settingNewCategoryInput');
+            const prodNameInput = document.getElementById('settingProductNameInput');
+            const priceInput = document.getElementById('settingProductPriceInput');
+
+            let categoryName = catSelect ? catSelect.value : '';
+            if (categoryName === '__NEW__' && newCatInput) {
+                categoryName = newCatInput.value.trim();
+            }
+
+            const productName = prodNameInput ? prodNameInput.value.trim() : '';
+            const productPrice = priceInput ? (parseFloat(priceInput.value) || 0) : 0;
+
+            if (!categoryName) {
+                showToast('Lütfen geçerli bir kategori seçin.');
+                return;
+            }
+            if (!productName) {
+                showToast('Lütfen ürün adını girin.');
+                return;
+            }
+
+            if (!urunCategories[categoryName]) urunCategories[categoryName] = [];
+            if (!urunCategories[categoryName].includes(productName)) {
+                urunCategories[categoryName].push(productName);
+            }
+
+            productPrices[productName] = productPrice;
+
+            if (prodNameInput) prodNameInput.value = '';
+            if (priceInput) priceInput.value = '';
+            if (newCatInput) {
+                newCatInput.value = '';
+                newCatInput.classList.add('hidden');
+            }
+
+            saveState();
+            renderUrunCategoryTabs();
+            renderPieCategoryNav();
+            renderSettingsView();
+            renderCiroOraniTable();
+
+            showToast(`"${productName}" (₺${productPrice}) kaydedildi.`);
+        }
+
+        function addPosFromSettings() {
+            const posInput = document.getElementById('settingPosNameInput');
+            const val = posInput ? posInput.value.trim() : '';
+
+            if (!val) {
+                showToast('Lütfen geçerli bir POS cihazı adı girin.');
+                return;
+            }
+
+            if (!posList.includes(val)) {
+                posList.push(val);
+                if (posInput) posInput.value = '';
+                saveState();
+                renderPosSelectOptions();
+                renderSettingsView();
+                renderPosCharts();
+                showToast(`"${val}" POS cihazı eklendi.`);
+            } else {
+                showToast('Bu POS cihazı zaten mevcut.');
+            }
+        }
+
+        function deletePosFromSettings(posName) {
+            if (confirm(`"${posName}" POS cihazını silmek istediğinize emin misiniz?`)) {
+                posList = posList.filter(p => p !== posName);
+                saveState();
+                renderPosSelectOptions();
+                renderSettingsView();
+                renderPosCharts();
+                showToast(`"${posName}" silindi.`);
+            }
+        }
+
+        function addStandFromSettings() {
+            const standInput = document.getElementById('settingStandNameInput');
+            const val = standInput ? standInput.value.trim() : '';
+
+            if (!val) {
+                showToast('Lütfen geçerli bir stand adı girin.');
+                return;
+            }
+
+            if (!standList.includes(val)) {
+                standList.push(val);
+                activeStand = val;
+                if (standInput) standInput.value = '';
+                saveState();
+                renderStandButtons();
+                renderSettingsView();
+                renderPosStandNav();
+                showToast(`"${val}" standı eklendi.`);
+            } else {
+                showToast('Bu stand zaten mevcut.');
+            }
+        }
+
+        function deleteStandFromSettings(standName) {
+            if (confirm(`"${standName}" standını silmek istediğinize emin misiniz?`)) {
+                standList = standList.filter(s => s !== standName);
+                if (activeStand === standName) {
+                    activeStand = standList.length > 0 ? standList[0] : '';
+                }
+                saveState();
+                renderStandButtons();
+                renderSettingsView();
+                renderPosStandNav();
+                showToast(`"${standName}" silindi.`);
+            }
+        }
+
+        function deleteProductFromSettings(category, productName) {
+            if (confirm(`"${productName}" ürününü silmek istediğinize emin misiniz?`)) {
+                if (urunCategories[category]) {
+                    urunCategories[category] = urunCategories[category].filter(p => p !== productName);
+                }
+                delete productPrices[productName];
+                saveState();
+                renderUrunCategoryTabs();
+                renderSettingsView();
+                renderCiroOraniTable();
+                showToast(`"${productName}" ürünü silindi.`);
+            }
+        }
+
+        function deleteCategoryFromSettings() {
+            const catSelect = document.getElementById('settingCategorySelect');
+            const catName = catSelect ? catSelect.value : '';
+
+            if (!catName || catName === '__NEW__') {
+                showToast('Lütfen silinecek bir kategori seçin.');
+                return;
+            }
+            if (!urunCategories[catName]) {
+                showToast('Kategori bulunamadı.');
+                return;
+            }
+
+            const productsInCat = urunCategories[catName] || [];
+            const confirmMsg = productsInCat.length > 0
+                ? `"${catName}" kategorisini ve içindeki ${productsInCat.length} ürünü silmek istediğinize emin misiniz?`
+                : `"${catName}" kategorisini silmek istediğinize emin misiniz?`;
+
+            if (!confirm(confirmMsg)) return;
+
+            productsInCat.forEach(p => { delete productPrices[p]; });
+            delete urunCategories[catName];
+
+            if (activeUrunCategory === catName) activeUrunCategory = 'Tümü';
+
+            saveState();
+            renderUrunCategoryTabs();
+            renderPieCategoryNav();
+            renderSettingsView();
+            renderCiroOraniTable();
+            renderUrunlerView();
+
+            showToast(`"${catName}" kategorisi silindi.`);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toastMessage');
+            if (msgEl) msgEl.textContent = msg;
+            if (toast) {
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 3000);
+            }
+        }
+
+        // Not: Uygulamanın başlatılması artık window.onload yerine, Firebase girişi
+        // başarılı olduğunda startFirestoreSync() -> initializeAppOnce() akışıyla yapılıyor.
+    </script>
+</body>
+</html>
