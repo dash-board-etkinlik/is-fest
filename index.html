@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>İs-Fest</title>
+    <title>KAAN Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -51,7 +51,6 @@
             max-width: 220px;
             flex-shrink: 0;
         }
-        .pie-legend.legend-multi { columns: 2; }
         .pie-legend .legend-item {
             display: flex;
             align-items: center;
@@ -72,7 +71,7 @@
             flex-shrink: 0;
         }
         @media (max-width: 767px) {
-            .pie-legend { max-width: 100%; columns: 2; }
+            .pie-legend { max-width: 100%; columns: 1; }
         }
     </style>
 </head>
@@ -301,12 +300,12 @@
                     <p class="text-lg font-extrabold text-stone-800 mb-3 text-center">Satış Adedi</p>
                     <div class="flex items-end justify-between gap-4">
                         <div>
-                            <p class="text-xs font-semibold text-stone-400">Toplam</p>
-                            <h4 class="text-2xl font-display font-black text-amber-600" id="ciroTotalSoldUnits">0</h4>
-                        </div>
-                        <div class="text-right">
                             <p class="text-xs font-semibold text-stone-400">Günlük</p>
                             <h4 class="text-2xl font-display font-black text-amber-600" id="ciroDailySoldUnits">0</h4>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-semibold text-stone-400">Toplam</p>
+                            <h4 class="text-2xl font-display font-black text-amber-600" id="ciroTotalSoldUnits">0</h4>
                         </div>
                     </div>
                 </div>
@@ -314,12 +313,12 @@
                     <p class="text-lg font-extrabold text-stone-800 mb-3 text-center">Hesaplanan Ürün Cirosu</p>
                     <div class="flex items-end justify-between gap-4">
                         <div>
-                            <p class="text-xs font-semibold text-stone-400">Toplam</p>
-                            <h4 class="text-2xl font-display font-black text-emerald-600 font-mono" id="ciroTotalCalculatedRevenue">₺0.00</h4>
-                        </div>
-                        <div class="text-right">
                             <p class="text-xs font-semibold text-stone-400">Günlük</p>
                             <h4 class="text-2xl font-display font-black text-emerald-600 font-mono" id="ciroDailyCalculatedRevenue">₺0.00</h4>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-semibold text-stone-400">Toplam</p>
+                            <h4 class="text-2xl font-display font-black text-emerald-600 font-mono" id="ciroTotalCalculatedRevenue">₺0.00</h4>
                         </div>
                     </div>
                 </div>
@@ -380,7 +379,8 @@
                                 <th class="p-3.5">Ürün Adı</th>
                                 <th class="p-3.5">Kategori</th>
                                 <th class="p-3.5 text-right cursor-pointer select-none hover:text-amber-600" onclick="sortCiroColumn('sold')">Satış Adeti<span id="ciroArrow-sold"></span></th>
-                                <th class="p-3.5 text-center cursor-pointer select-none hover:text-amber-600" onclick="sortCiroColumn('price')">Güncel Birim Fiyat (₺)<span id="ciroArrow-price"></span></th>
+                                <th class="p-3.5 text-center cursor-pointer select-none hover:text-amber-600" onclick="sortCiroColumn('price')">Ortalama Fiyat (₺)<span id="ciroArrow-price"></span></th>
+                                <th class="p-3.5 text-center">Güncel Fiyat (₺)</th>
                                 <th class="p-3.5 text-right cursor-pointer select-none hover:text-amber-600" onclick="sortCiroColumn('revenue')">Toplam Ciro (₺)<span id="ciroArrow-revenue"></span></th>
                                 <th class="p-3.5 whitespace-nowrap cursor-pointer select-none hover:text-amber-600" onclick="sortCiroColumn('salesPercent')">Satış Oranı (%)<span id="ciroArrow-salesPercent"></span></th>
                                 <th class="p-3.5 whitespace-nowrap cursor-pointer select-none hover:text-amber-600" onclick="sortCiroColumn('revenuePercent')">Ciro Oranı (%)<span id="ciroArrow-revenuePercent"></span></th>
@@ -670,6 +670,9 @@
                         <tbody class="divide-y divide-stone-100" id="settingProductTableBody"></tbody>
                     </table>
                 </div>
+                <button onclick="saveAllProductPricesFromSettings()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-floppy-disk"></i> Tüm Fiyatları Kaydet
+                </button>
             </div>
         </section>
 
@@ -798,7 +801,14 @@
         function startFirestoreSync() {
             if (firestoreUnsubscribe) return;
             firestoreUnsubscribe = db.collection('sharedData').doc('main').onSnapshot(function(doc) {
+                const isFirstLoad = !appInitialized;
                 applyStateFromFirestore(doc.exists ? doc.data() : {});
+                if (isFirstLoad) {
+                    const defaultCat = getDefaultUrunCategory(Object.keys(urunCategories));
+                    activeUrunCategory = defaultCat;
+                    ciroCategoryFilterValue = defaultCat;
+                    ciroOraniTableMode = 'gunluk';
+                }
                 if (!appInitialized) {
                     appInitialized = true;
                     initializeAppOnce();
@@ -1029,7 +1039,7 @@
                     'Ürün Adı': r.product,
                     'Tarih': r.date,
                     'Adet': r.salesCount,
-                    'Satış Anındaki Birim Fiyat': r.unitPrice !== undefined ? r.unitPrice : (productPrices[r.product] || 0)
+                    'Satış Anındaki Birim Fiyat': (r.unitPrice !== undefined && r.unitPrice !== null && r.unitPrice > 0) ? r.unitPrice : (productPrices[r.product] || 0)
                 }));
                 XLSX.utils.book_append_sheet(wb,
                     XLSX.utils.json_to_sheet(urunRows.length ? urunRows : [{ 'Kategori': '', 'Ürün Adı': '', 'Tarih': '', 'Adet': '' }]),
@@ -1236,7 +1246,8 @@
             });
 
             urunCategories = Object.keys(newUrunCategories).length ? newUrunCategories : { 'İçecek': [] };
-            activeUrunCategory = 'Tümü';
+            activeUrunCategory = getDefaultUrunCategory(Object.keys(urunCategories));
+            ciroCategoryFilterValue = getDefaultUrunCategory(Object.keys(urunCategories));
             productPrices = newProductPrices;
             standList = newStandList.length ? newStandList : ['Stand-1'];
             activeStand = standList[0] || '';
@@ -1283,7 +1294,7 @@
         let chartPanelOdemeSekliPieInstance = null;
         let panelOdemeSekliMode = 'gunluk';
         let ciroCategoryFilterValue = 'Tümü';
-        let ciroOraniTableMode = 'toplam';
+        let ciroOraniTableMode = 'gunluk';
         let chartPosGunlukInstance = null;
         let chartPosToplamInstance = null;
         let chartPosBarInstance = null;
@@ -1461,7 +1472,7 @@
 
             historyItems.forEach(item => {
                 salesCountMap[item.product] = (salesCountMap[item.product] || 0) + item.salesCount;
-                const priceAtSaleTime = (item.unitPrice !== undefined && item.unitPrice !== null)
+                const priceAtSaleTime = (item.unitPrice !== undefined && item.unitPrice !== null && item.unitPrice > 0)
                     ? item.unitPrice
                     : (productPrices[item.product] || 0);
                 revenueMap[item.product] = (revenueMap[item.product] || 0) + (item.salesCount * priceAtSaleTime);
@@ -1525,10 +1536,10 @@
             }
             const selectedDate = dateInput ? dateInput.value : TODAY_STR;
 
-            const cats = Object.keys(urunCategories);
-            const navCats = ['Tümü', ...cats];
+            const cats = sortUrunCategories(Object.keys(urunCategories));
+            const navCats = [...cats, 'Tümü'];
             if (!navCats.includes(ciroCategoryFilterValue)) {
-                ciroCategoryFilterValue = 'Tümü';
+                ciroCategoryFilterValue = getDefaultUrunCategory(cats);
             }
 
             if (catNavContainer) {
@@ -1592,7 +1603,7 @@
             if (filteredList.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="7" class="p-8 text-center text-stone-400 font-medium">Görüntülenecek ürün bulunamadı.</td>
+                        <td colspan="8" class="p-8 text-center text-stone-400 font-medium">Görüntülenecek ürün bulunamadı.</td>
                     </tr>
                 `;
                 tfoot.innerHTML = '';
@@ -1605,8 +1616,9 @@
 
             let rowsData = filteredList.map(item => {
                 const soldCount = salesCountMap[item.name] || 0;
-                const price = productPrices[item.name] !== undefined ? productPrices[item.name] : 0;
                 const revenue = revenueMap[item.name] || 0;
+                const currentPrice = productPrices[item.name] !== undefined ? productPrices[item.name] : 0;
+                const price = soldCount > 0 ? (revenue / soldCount) : currentPrice;
 
                 filterTotalSold += soldCount;
                 filterTotalRevenue += revenue;
@@ -1614,7 +1626,7 @@
                 const salesPercent = grandTotalSoldUnits > 0 ? ((soldCount / grandTotalSoldUnits) * 100) : 0;
                 const revenuePercent = grandTotalRevenue > 0 ? ((revenue / grandTotalRevenue) * 100) : 0;
 
-                return { name: item.name, category: item.category, soldCount, price, revenue, salesPercent, revenuePercent };
+                return { name: item.name, category: item.category, soldCount, price, currentPrice, revenue, salesPercent, revenuePercent };
             });
 
             if (ciroSortColumn) {
@@ -1640,6 +1652,7 @@
                         </td>
                         <td class="p-3.5 text-right font-bold text-stone-800">${row.soldCount.toLocaleString('tr-TR')} Adet</td>
                         <td class="p-3.5 text-center font-bold text-stone-700 font-mono">₺${row.price.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td class="p-3.5 text-center font-bold text-emerald-700 font-mono">₺${row.currentPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
                         <td class="p-3.5 text-right font-black text-amber-700 font-mono">₺${row.revenue.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
                         <td class="p-3.5">
                             <div class="flex items-center gap-2">
@@ -1672,6 +1685,7 @@
                     <td class="p-4" colspan="2">TOPLAM (${filteredList.length} Ürün)</td>
                     <td class="p-4 text-right font-bold">${filterTotalSold.toLocaleString('tr-TR')} Adet</td>
                     <td class="p-4 text-center text-stone-400">-</td>
+                    <td class="p-4 text-center text-stone-400">-</td>
                     <td class="p-4 text-right font-black text-amber-800 font-mono">₺${filterTotalRevenue.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
                     <td class="p-4"><span class="text-xs font-bold font-mono text-amber-900">%${filterSalesPercent.toFixed(1)}</span></td>
                     <td class="p-4"><span class="text-xs font-bold font-mono text-emerald-900">%${filterRevenuePercent.toFixed(1)}</span></td>
@@ -1687,6 +1701,25 @@
                 .replace(/ş/g, 's').replace(/ç/g, 'c')
                 .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ö/g, 'o')
                 .replace(/[^a-z0-9]/g, '');
+        }
+
+        const URUN_CATEGORY_PRIORITY = ['sogukicecek', 'sicakicecek', 'digericecek', 'atistirmalik', 'tastopia'];
+
+        function sortUrunCategories(cats) {
+            return [...cats].sort((a, b) => {
+                const na = trNormalize(a), nb = trNormalize(b);
+                const ia = URUN_CATEGORY_PRIORITY.findIndex(p => na.includes(p));
+                const ib = URUN_CATEGORY_PRIORITY.findIndex(p => nb.includes(p));
+                const ra = ia === -1 ? URUN_CATEGORY_PRIORITY.length : ia;
+                const rb = ib === -1 ? URUN_CATEGORY_PRIORITY.length : ib;
+                if (ra !== rb) return ra - rb;
+                return a.localeCompare(b, 'tr');
+            });
+        }
+
+        function getDefaultUrunCategory(cats) {
+            const target = cats.find(c => trNormalize(c).includes('sogukicecek'));
+            return target || 'Tümü';
         }
 
         function findHeaderKey(row, keywords) {
@@ -1831,8 +1864,6 @@
 
             const productKey = findHeaderKey(rows[0], ['urun', 'product', 'isim']);
             const countKey = findHeaderKey(rows[0], ['adet', 'miktar', 'satisadedi', 'quantity', 'qty', 'count', 'satis']);
-            const priceKey = findHeaderKey(rows[0], ['fiyat', 'fiyati', 'price', 'ucret']);
-            const amountKey = findHeaderKey(rows[0], ['tutar', 'tutari', 'amount', 'toplam']);
             const dateKey = findHeaderKey(rows[0], ['tarih', 'date']);
             const categoryKey = findHeaderKey(rows[0], ['kategori', 'category', 'baslik']);
 
@@ -1889,23 +1920,6 @@
                         newProductNames.push(targetProduct);
                     }
                     productLookup[normProduct] = { category: targetCategory, product: targetProduct };
-                }
-
-                let computedUnitPrice = null;
-                if (amountKey && row[amountKey] !== undefined && row[amountKey] !== '') {
-                    const parsedAmount = parseFloat(String(row[amountKey]).replace(',', '.'));
-                    if (!isNaN(parsedAmount) && countVal > 0) {
-                        computedUnitPrice = Math.round((parsedAmount / countVal) * 100) / 100;
-                    }
-                }
-
-                if (computedUnitPrice !== null && computedUnitPrice >= 0) {
-                    productPrices[targetProduct] = computedUnitPrice;
-                } else if (priceKey && row[priceKey] !== undefined && row[priceKey] !== '') {
-                    const parsedPrice = parseFloat(row[priceKey]);
-                    if (!isNaN(parsedPrice) && parsedPrice >= 0) {
-                        productPrices[targetProduct] = parsedPrice;
-                    }
                 }
 
                 let entryDate = fallbackDate;
@@ -2269,14 +2283,15 @@
         }
 
         function renderPieCategoryNav() {
-            const cats = ['Tümü', ...Object.keys(urunCategories)];
+            const sortedCats = sortUrunCategories(Object.keys(urunCategories));
+            const cats = [...sortedCats, 'Tümü'];
             if (!cats.includes(activeUrunCategory)) {
-                activeUrunCategory = 'Tümü';
+                activeUrunCategory = getDefaultUrunCategory(sortedCats);
             }
 
             const html = cats.map(cat => {
                 const isActive = (cat === activeUrunCategory);
-                const label = (cat === 'Tümü') ? 'Toplam' : cat;
+                const label = (cat === 'Tümü') ? 'Tüm Kategoriler' : cat;
                 return `
                     <button onclick="setPieCategory('${cat}')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${isActive ? 'bg-amber-500 text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900'}">${label}</button>
                 `;
@@ -2336,10 +2351,14 @@
             renderPosCharts();
         }
 
-        function renderPieLegend(containerId, labels, colors) {
+        function renderPieLegend(containerId, labels, colors, hideLegend) {
             const container = document.getElementById(containerId);
             if (!container) return;
-            container.classList.toggle('legend-multi', labels.length > 6);
+            container.classList.remove('legend-multi');
+            if (hideLegend) {
+                container.innerHTML = '';
+                return;
+            }
             container.innerHTML = labels.map((label, i) => `
                 <div class="legend-item">
                     <span class="legend-dot" style="background:${colors[i]}"></span>
@@ -2417,7 +2436,7 @@
 
             const gunlukLegendLabels = labels.length ? labels : ['Veri Yok'];
             const gunlukLegendColors = gunlukSum > 0 ? chartColors.slice(0, labels.length) : ['#e5e7eb'];
-            renderPieLegend('chartGunlukLegend', gunlukLegendLabels, gunlukLegendColors);
+            renderPieLegend('chartGunlukLegend', gunlukLegendLabels, gunlukLegendColors, activeUrunCategory === 'Tümü');
 
             chartGunlukInstance = new Chart(ctxGunluk, {
                 type: 'pie',
@@ -2435,7 +2454,7 @@
 
             const toplamLegendLabels = labels.length ? labels : ['Veri Yok'];
             const toplamLegendColors = toplamSum > 0 ? chartColors.slice(0, labels.length) : ['#e5e7eb'];
-            renderPieLegend('chartToplamLegend', toplamLegendLabels, toplamLegendColors);
+            renderPieLegend('chartToplamLegend', toplamLegendLabels, toplamLegendColors, activeUrunCategory === 'Tümü');
 
             chartToplamInstance = new Chart(ctxToplam, {
                 type: 'pie',
@@ -2716,10 +2735,10 @@
 
             if (!navContainer || !headerContainer || !tbody) return;
 
-            const cats = Object.keys(urunCategories);
-            const navCats = ['Tümü', ...cats];
+            const cats = sortUrunCategories(Object.keys(urunCategories));
+            const navCats = [...cats, 'Tümü'];
             if (!navCats.includes(activeUrunCategory)) {
-                activeUrunCategory = 'Tümü';
+                activeUrunCategory = getDefaultUrunCategory(cats);
             }
 
             navContainer.innerHTML = navCats.map(cat => {
@@ -3137,6 +3156,27 @@
             renderCiroOraniTable();
         }
 
+        function saveAllProductPricesFromSettings() {
+            const inputs = document.querySelectorAll('#settingProductTableBody .settingPriceInput');
+            if (!inputs || inputs.length === 0) {
+                showToast('Kaydedilecek ürün bulunmuyor.');
+                return;
+            }
+
+            inputs.forEach(input => {
+                const productName = input.getAttribute('data-product-name');
+                if (!productName) return;
+                const val = parseFloat(input.value);
+                productPrices[productName] = (!isNaN(val) && val >= 0) ? val : 0;
+            });
+
+            saveState();
+            renderSettingsView();
+            renderCiroOraniTable();
+
+            showToast('Tüm ürün fiyatları başarıyla kaydedildi.');
+        }
+
         function createNewCategoryFromSettings() {
             const input = document.getElementById('createNewCategoryInput');
             const catName = input ? input.value.trim() : '';
@@ -3260,7 +3300,7 @@
                     <td class="p-3.5 text-center">
                         <div class="inline-flex items-center gap-1 bg-stone-50 border border-stone-300 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-amber-500 max-w-[120px] mx-auto">
                             <span class="text-stone-400 font-bold text-xs">₺</span>
-                            <input type="number" step="0.5" min="0" value="${item.price}" onchange="updateProductPrice('${item.name}', this.value)" class="w-full bg-transparent text-xs font-bold text-stone-800 text-right focus:outline-none">
+                            <input type="number" step="0.5" min="0" value="${item.price}" data-product-name="${item.name}" onchange="updateProductPrice('${item.name}', this.value)" class="settingPriceInput w-full bg-transparent text-xs font-bold text-stone-800 text-right focus:outline-none">
                         </div>
                     </td>
                     <td class="p-3.5 text-center">
