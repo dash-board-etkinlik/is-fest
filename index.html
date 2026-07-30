@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>İs-Fest</title>
+    <title>KAAN Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -106,12 +106,7 @@
 
                 <button onclick="switchTab('odeme')" id="nav-odeme" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
                     <i class="fa-solid fa-credit-card w-5 text-center text-lg"></i>
-                    <span>Ödeme Şekli</span>
-                </button>
-
-                <button onclick="switchTab('urunler')" id="nav-urunler" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
-                    <i class="fa-solid fa-boxes-stacked w-5 text-center text-lg"></i>
-                    <span>Ürünler</span>
+                    <span>Tahsilat Raporu</span>
                 </button>
 
                 <button onclick="switchTab('ciroOrani')" id="nav-ciroOrani" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
@@ -119,25 +114,14 @@
                     <span>Ciro Oranı</span>
                 </button>
 
-                <button onclick="switchTab('standVeriGirisi')" id="nav-standVeriGirisi" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
-                    <i class="fa-solid fa-store w-5 text-center text-lg"></i>
-                    <span>Ciro Veri Girişi</span>
-                </button>
-
-                <button onclick="switchTab('urunVeriGirisi')" id="nav-urunVeriGirisi" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
-                    <i class="fa-solid fa-cart-shopping w-5 text-center text-lg"></i>
-                    <span>Ürün Veri Girişi</span>
+                <button onclick="switchTab('veriGirisi')" id="nav-veriGirisi" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
+                    <i class="fa-solid fa-file-import w-5 text-center text-lg"></i>
+                    <span>Veri Girişi</span>
                 </button>
 
                 <button onclick="switchTab('ayarlar')" id="nav-ayarlar" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
                     <i class="fa-solid fa-gear w-5 text-center text-lg"></i>
                     <span>Ayarlar</span>
-                </button>
-
-                <!-- İndir button directly under Ayarlar -->
-                <button onclick="switchTab('indir')" id="nav-indir" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-stone-300 hover:bg-stone-800">
-                    <i class="fa-solid fa-download w-5 text-center text-lg"></i>
-                    <span>İndir/Yükle</span>
                 </button>
             </nav>
         </div>
@@ -181,20 +165,13 @@
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
-                <h3 class="text-lg font-bold text-stone-800 mb-4">Toplam Ciro Grafiği</h3>
-                <div class="w-full h-64 relative">
-                    <canvas id="chartPanelToplamCiroKumulatif"></canvas>
-                </div>
-            </div>
-
         </section>
 
         <!-- ==================== VIEW 2: ÖDEME ŞEKLİ ==================== -->
         <section id="view-odeme" class="view-content hidden space-y-6">
             <div class="bg-white rounded-[1.75rem] shadow-sm border border-stone-200 p-6">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                    <h3 class="text-lg font-bold text-stone-800">Ödeme Şekli Detayları</h3>
+                    <h3 class="text-lg font-bold text-stone-800">Tahsilat Raporu</h3>
                     <div class="flex items-center gap-2">
                         <input type="date" id="odemeFilterDate" onchange="renderOdemeTable()" class="px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold">
                         <button onclick="clearOdemeFilterDate()" class="text-xs text-stone-400 hover:text-stone-700 p-1"><i class="fa-solid fa-xmark"></i></button>
@@ -239,7 +216,7 @@
 
             <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
                 <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
-                    <h3 class="text-lg font-bold text-stone-800">Ödeme Şekli Dağılımı</h3>
+                    <h3 class="text-lg font-bold text-stone-800">Tahsilat Dağılımı</h3>
                 </div>
                 <div class="flex flex-col md:flex-row items-center gap-6">
                     <div id="chartPanelOdemeSekliPieLegend" class="pie-legend"></div>
@@ -250,45 +227,26 @@
             </div>
 
             <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
-                <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
-                    <h3 class="text-lg font-bold text-stone-800">Ödeme Şekli Grafiği</h3>
-                    <div class="flex items-center gap-4 text-xs font-semibold">
-                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#f59e0b]"></span> Kredi</span>
-                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#0f766e]"></span> Nakit</span>
-                    </div>
-                </div>
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <h3 class="text-lg font-bold text-stone-800 whitespace-nowrap">Tahsilat Grafiği</h3>
                     <div class="inline-flex p-1 bg-stone-100 rounded-xl border border-stone-200">
                         <button onclick="setPanelOdemeSekliMode('gunluk')" id="panelOdemeModeBtn-gunluk" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all">Günlük</button>
                         <button onclick="setPanelOdemeSekliMode('toplam')" id="panelOdemeModeBtn-toplam" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all">Toplam</button>
                         <button onclick="setPanelOdemeSekliMode('tumGunler')" id="panelOdemeModeBtn-tumGunler" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all">Tüm Günler</button>
                     </div>
-                    <input type="date" id="panelOdemeSekliDate" onchange="renderOdemeSekliChart()" class="px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 items-center gap-3 mb-4">
+                    <div></div>
+                    <div class="flex items-center justify-start sm:justify-center gap-4 text-xs font-semibold">
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#f59e0b]"></span> Kredi</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#0f766e]"></span> Nakit</span>
+                    </div>
+                    <div class="flex justify-start sm:justify-end">
+                        <input type="date" id="panelOdemeSekliDate" onchange="renderOdemeSekliChart()" class="px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed">
+                    </div>
                 </div>
                 <div class="w-full h-72 relative">
                     <canvas id="chartPanelOdemeSekli"></canvas>
-                </div>
-            </div>
-        </section>
-
-        <!-- ==================== VIEW 3: ÜRÜNLER ==================== -->
-        <section id="view-urunler" class="view-content hidden space-y-6">
-            <div class="bg-white rounded-[1.75rem] shadow-sm border border-stone-200 p-6">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                    <h3 class="text-lg font-bold text-stone-800">Ürün Detayları</h3>
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <div class="flex items-center gap-2">
-                            <input type="date" id="urunlerFilterDate" onchange="renderUrunlerView()" class="px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold">
-                            <button onclick="clearUrunlerFilterDate()" class="text-xs text-stone-400 hover:text-stone-700 p-1"><i class="fa-solid fa-xmark"></i></button>
-                        </div>
-                        <div class="inline-flex p-1 bg-stone-100 rounded-xl border border-stone-200 flex-wrap gap-1" id="urunlerCategoryNav"></div>
-                    </div>
-                </div>
-                <div class="overflow-x-auto rounded-xl border border-stone-200">
-                    <table class="w-full text-center text-sm text-stone-700 border-collapse border border-stone-200">
-                        <thead class="bg-stone-50 text-stone-800 font-bold border-b border-stone-200" id="urunlerTableHeader"></thead>
-                        <tbody id="urunlerTableBody"></tbody>
-                    </table>
                 </div>
             </div>
         </section>
@@ -328,40 +286,37 @@
                 <div class="bg-white p-5 rounded-[1.75rem] shadow-sm border border-stone-200">
                     <p class="text-sm font-extrabold text-stone-800 mb-2">En Çok Satılan Ürün</p>
                     <p class="text-[11px] font-semibold text-stone-400">Toplam</p>
-                    <h4 class="text-sm font-bold text-stone-800 truncate mb-1.5" id="ciroTopSoldProduct">-</h4>
+                    <h4 class="text-xs font-bold text-stone-800 truncate mb-1.5" id="ciroTopSoldProduct">-</h4>
                     <p class="text-[11px] font-semibold text-stone-400">Günlük</p>
-                    <h4 class="text-sm font-bold text-stone-800 truncate" id="ciroTopSoldProductDaily">-</h4>
+                    <h4 class="text-xs font-bold text-stone-800 truncate" id="ciroTopSoldProductDaily">-</h4>
                 </div>
                 <div class="bg-white p-5 rounded-[1.75rem] shadow-sm border border-stone-200">
                     <p class="text-sm font-extrabold text-stone-800 mb-2">En Az Satılan Ürün</p>
                     <p class="text-[11px] font-semibold text-stone-400">Toplam</p>
-                    <h4 class="text-sm font-bold text-stone-800 truncate mb-1.5" id="ciroLeastSoldProduct">-</h4>
+                    <h4 class="text-xs font-bold text-stone-800 truncate mb-1.5" id="ciroLeastSoldProduct">-</h4>
                     <p class="text-[11px] font-semibold text-stone-400">Günlük</p>
-                    <h4 class="text-sm font-bold text-stone-800 truncate" id="ciroLeastSoldProductDaily">-</h4>
+                    <h4 class="text-xs font-bold text-stone-800 truncate" id="ciroLeastSoldProductDaily">-</h4>
                 </div>
                 <div class="bg-white p-5 rounded-[1.75rem] shadow-sm border border-stone-200">
                     <p class="text-sm font-extrabold text-stone-800 mb-2">En Yüksek Cirolu Ürün</p>
                     <p class="text-[11px] font-semibold text-stone-400">Toplam</p>
-                    <h4 class="text-sm font-bold text-stone-800 truncate mb-1.5" id="ciroTopRevenueProduct">-</h4>
+                    <h4 class="text-xs font-bold text-stone-800 truncate mb-1.5" id="ciroTopRevenueProduct">-</h4>
                     <p class="text-[11px] font-semibold text-stone-400">Günlük</p>
-                    <h4 class="text-sm font-bold text-stone-800 truncate" id="ciroTopRevenueProductDaily">-</h4>
+                    <h4 class="text-xs font-bold text-stone-800 truncate" id="ciroTopRevenueProductDaily">-</h4>
                 </div>
                 <div class="bg-white p-5 rounded-[1.75rem] shadow-sm border border-stone-200">
                     <p class="text-sm font-extrabold text-stone-800 mb-2">En Düşük Cirolu Ürün</p>
                     <p class="text-[11px] font-semibold text-stone-400">Toplam</p>
-                    <h4 class="text-sm font-bold text-stone-800 truncate mb-1.5" id="ciroLeastRevenueProduct">-</h4>
+                    <h4 class="text-xs font-bold text-stone-800 truncate mb-1.5" id="ciroLeastRevenueProduct">-</h4>
                     <p class="text-[11px] font-semibold text-stone-400">Günlük</p>
-                    <h4 class="text-sm font-bold text-stone-800 truncate" id="ciroLeastRevenueProductDaily">-</h4>
+                    <h4 class="text-xs font-bold text-stone-800 truncate" id="ciroLeastRevenueProductDaily">-</h4>
                 </div>
             </div>
 
             <div class="bg-white rounded-[1.75rem] shadow-sm border border-stone-200 p-6 space-y-4">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-stone-100">
-                    <h3 class="text-lg font-bold text-stone-800">Tüm Ürünler Ciro & Satış Oranı Analizi</h3>
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <div class="inline-flex flex-wrap gap-1 p-1 bg-stone-100 rounded-xl border border-stone-200" id="ciroCategoryNav"></div>
-                        <input type="text" id="ciroSearchInput" oninput="renderCiroOraniTable()" placeholder="Ürün ara..." class="px-3 py-1.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-medium focus:outline-none">
-                    </div>
+                    <h3 class="text-lg font-bold text-stone-800 whitespace-nowrap">Tüm Ürünler Ciro & Satış Oranı Analizi</h3>
+                    <div class="inline-flex flex-wrap gap-1 p-1 bg-stone-100 rounded-xl border border-stone-200" id="ciroCategoryNav"></div>
                 </div>
 
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -369,7 +324,10 @@
                         <button onclick="setCiroOraniTableMode('gunluk')" id="ciroTableModeBtn-gunluk" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all">Günlük</button>
                         <button onclick="setCiroOraniTableMode('toplam')" id="ciroTableModeBtn-toplam" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all">Toplam</button>
                     </div>
-                    <input type="date" id="ciroOraniDateInput" onchange="renderCiroOraniTable()" class="px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <input type="text" id="ciroSearchInput" oninput="renderCiroOraniTable()" placeholder="Ürün ara..." class="px-3 py-1.5 bg-stone-50 border border-stone-300 rounded-xl text-xs font-medium focus:outline-none">
+                        <input type="date" id="ciroOraniDateInput" onchange="renderCiroOraniTable()" class="px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold">
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto rounded-xl border border-stone-200">
@@ -392,13 +350,32 @@
                 </div>
             </div>
 
+            <div class="bg-white rounded-[1.75rem] shadow-sm border border-stone-200 p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-stone-100">
+                    <h3 class="text-lg font-bold text-stone-800 whitespace-nowrap">Ürün Bazlı Günlük Satış Grafiği</h3>
+                    <div class="inline-flex flex-wrap gap-1 p-1 bg-stone-100 rounded-xl border border-stone-200" id="urunGunlukCategoryNav"></div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-3">
+                        <div class="border border-stone-200 rounded-2xl bg-stone-50/50 max-h-[26rem] overflow-y-auto custom-scrollbar divide-y divide-stone-200" id="urunGunlukProductList"></div>
+                    </div>
+                    <div class="lg:col-span-9">
+                        <div class="w-full h-[26rem] relative">
+                            <canvas id="chartUrunGunlukSatis"></canvas>
+                        </div>
+                        <p class="text-center text-xs font-semibold text-stone-400 mt-2" id="urunGunlukEmptyText"></p>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-white rounded-[1.75rem] shadow-sm border border-stone-200 p-6 space-y-6">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-stone-100">
-                    <h3 class="text-lg font-bold text-stone-800">Ürün Grafiği Analizi</h3>
-                    <div class="flex items-center gap-2 flex-wrap bg-stone-100 p-1.5 rounded-2xl border border-stone-200">
-                        <input type="date" id="chartGunlukDate" onchange="setUrunGunlukDate(this.value, this.id)" class="px-3 py-1.5 bg-white border border-stone-300 rounded-xl text-xs font-semibold text-stone-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
-                        <div class="inline-flex p-1 bg-stone-200/60 rounded-xl flex-wrap gap-1" id="pieCategoryNav"></div>
-                    </div>
+                    <h3 class="text-lg font-bold text-stone-800 whitespace-nowrap">Ürün Dağılımı</h3>
+                    <div class="inline-flex p-1 bg-stone-200/60 rounded-xl flex-wrap gap-1" id="pieCategoryNav"></div>
+                </div>
+                <div class="flex justify-end">
+                    <input type="date" id="chartGunlukDate" onchange="setUrunGunlukDate(this.value, this.id)" class="px-3 py-1.5 bg-white border border-stone-300 rounded-xl text-xs font-semibold text-stone-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -429,16 +406,24 @@
                 </div>
 
                 <div class="border border-stone-200 rounded-[1.75rem] p-6 bg-stone-50/50 space-y-3">
-                    <div class="flex items-center justify-between flex-wrap gap-2">
-                        <h4 class="text-base font-bold text-stone-800">Ürün Satış Performansı</h4>
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <input type="date" id="chartGunlukDateBar" onchange="setUrunGunlukDate(this.value, this.id)" class="px-3 py-1.5 bg-white border border-stone-300 rounded-xl text-xs font-semibold text-stone-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
-                            <div class="inline-flex p-1 bg-stone-100 rounded-xl flex-wrap gap-1" id="barCategoryNav"></div>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <h4 class="text-base font-bold text-stone-800 whitespace-nowrap">Ürün Satış Performansı</h4>
+                        <div class="inline-flex p-1 bg-stone-100 rounded-xl flex-wrap gap-1" id="barCategoryNav"></div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 items-center gap-3">
+                        <div class="flex justify-start">
                             <div class="inline-flex p-1 bg-white rounded-xl border border-stone-200 gap-1 text-xs font-semibold shadow-sm">
                                 <button onclick="setUrunBarMode('all')" id="btnUrunBarAll" class="px-3 py-1 rounded-lg transition-all bg-amber-500 text-stone-900 shadow-sm">İkisi</button>
                                 <button onclick="setUrunBarMode('gunluk')" id="btnUrunBarGunluk" class="px-3 py-1 rounded-lg transition-all text-stone-600 hover:text-stone-900">Günlük</button>
                                 <button onclick="setUrunBarMode('toplam')" id="btnUrunBarToplam" class="px-3 py-1 rounded-lg transition-all text-stone-600 hover:text-stone-900">Toplam</button>
                             </div>
+                        </div>
+                        <div class="flex items-center justify-start sm:justify-center gap-4 text-xs font-semibold">
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#f59e0b]"></span> Günlük Satış (Adet)</span>
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#0f766e]"></span> Toplam Satış (Adet)</span>
+                        </div>
+                        <div class="flex justify-start sm:justify-end">
+                            <input type="date" id="chartGunlukDateBar" onchange="setUrunGunlukDate(this.value, this.id)" class="px-3 py-1.5 bg-white border border-stone-300 rounded-xl text-xs font-semibold text-stone-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
                         </div>
                     </div>
                     <div class="w-full h-[28rem] relative">
@@ -448,9 +433,11 @@
             </div>
         </section>
 
-        <!-- ==================== VIEW 7: CİRO VERİ GİRİŞİ ==================== -->
-        <section id="view-standVeriGirisi" class="view-content hidden space-y-6">
-            <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
+        <!-- ==================== VIEW 7: VERİ GİRİŞİ ==================== -->
+        <section id="view-veriGirisi" class="view-content hidden space-y-8">
+            <div class="space-y-6">
+                <h3 class="text-lg font-display font-bold text-stone-800 flex items-center gap-2"><i class="fa-solid fa-store text-amber-500"></i> Ciro Veri Girişi</h3>
+                <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-base font-bold text-stone-800">Dosya Yükle</h3>
                     <span class="text-[11px] font-semibold text-stone-400 bg-stone-100 px-2 py-1 rounded-full">.xlsx / .csv</span>
@@ -523,11 +510,11 @@
                     </div>
                 </div>
             </div>
-        </section>
+            </div>
 
-        <!-- ==================== VIEW 8: ÜRÜN VERİ GİRİŞİ ==================== -->
-        <section id="view-urunVeriGirisi" class="view-content hidden space-y-6">
-            <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
+            <div class="space-y-6 pt-6 border-t border-dashed border-stone-300">
+                <h3 class="text-lg font-display font-bold text-stone-800 flex items-center gap-2"><i class="fa-solid fa-cart-shopping text-amber-500"></i> Ürün Veri Girişi</h3>
+                <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-base font-bold text-stone-800">Dosya Yükle</h3>
                     <span class="text-[11px] font-semibold text-stone-400 bg-stone-100 px-2 py-1 rounded-full">.xlsx / .csv</span>
@@ -595,6 +582,53 @@
                         </table>
                     </div>
                 </div>
+            </div>
+            </div>
+
+            <div class="space-y-6 pt-6 border-t border-dashed border-stone-300">
+                <h3 class="text-lg font-display font-bold text-stone-800 flex items-center gap-2"><i class="fa-solid fa-download text-amber-500"></i> İndir/Yükle</h3>
+                <div class="bg-white rounded-[1.75rem] shadow-sm border border-stone-200 p-8 space-y-6">
+                <div class="flex items-center justify-between border-b border-stone-100 pb-4">
+                    <h3 class="text-xl font-bold text-stone-800">Yedekleme</h3>
+                    <span class="text-xs font-semibold text-stone-400 bg-stone-100 px-3 py-1 rounded-full">.xlsx</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Left Download Box -->
+                    <div class="border border-stone-200 rounded-2xl p-8 flex flex-col items-center justify-center text-center bg-stone-50/50 space-y-3">
+                        <i class="fa-solid fa-file-excel text-5xl text-emerald-600 mb-1"></i>
+                        <h4 class="text-base font-bold text-stone-800">Tüm Verileri İndir</h4>
+                        <p class="text-xs text-stone-400">Tüm veriler tek bir Excel dosyasına aktarılır.</p>
+                        <button onclick="exportAllDataToExcel()" class="mt-2 px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-stone-900 font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-download"></i> Excel İndir
+                        </button>
+                    </div>
+
+                    <!-- Right Upload Box -->
+                    <div id="backupFileDropzone" onclick="document.getElementById('backupFileInput').click()" class="relative border-2 border-dashed border-stone-300 rounded-2xl p-8 text-center cursor-pointer transition-all hover:border-amber-400 hover:bg-amber-50/40 flex flex-col items-center justify-center space-y-2">
+                        <input type="file" id="backupFileInput" accept=".xlsx,.xls" class="hidden" onchange="handleBackupFileSelect(event)">
+
+                        <div id="backupDropzoneIdle" class="flex flex-col items-center justify-center">
+                            <i class="fa-solid fa-cloud-arrow-up text-4xl text-amber-400 mb-2"></i>
+                            <p class="text-sm font-semibold text-stone-700">Yedek dosyasını buraya sürükleyin</p>
+                            <p class="text-xs text-stone-400 mt-1">veya tıklayarak dosya seçin</p>
+                        </div>
+
+                        <div id="backupDropzoneSuccess" class="hidden flex flex-col items-center justify-center">
+                            <i class="fa-solid fa-circle-check text-4xl text-emerald-500 mb-2"></i>
+                            <p class="text-sm font-semibold text-stone-800" id="backupDropzoneSuccessText">Veriler geri yüklendi.</p>
+                            <p class="text-xs text-stone-500 mt-1" id="backupDropzoneSuccessSub"></p>
+                            <button onclick="event.stopPropagation(); resetBackupDropzone();" class="mt-3 text-xs font-semibold text-amber-600 hover:underline">Başka bir dosya yükle</button>
+                        </div>
+
+                        <div id="backupDropzoneError" class="hidden flex flex-col items-center justify-center">
+                            <i class="fa-solid fa-triangle-exclamation text-4xl text-red-500 mb-2"></i>
+                            <p class="text-sm font-semibold text-red-600" id="backupDropzoneErrorText">Dosya okunamadı.</p>
+                            <button onclick="event.stopPropagation(); resetBackupDropzone();" class="mt-3 text-xs font-semibold text-stone-500 hover:underline">Tekrar dene</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             </div>
         </section>
 
@@ -676,53 +710,7 @@
             </div>
         </section>
 
-        <!-- ==================== VIEW 10: YEDEKLEME (İNDİR) ==================== -->
-        <section id="view-indir" class="view-content hidden space-y-6">
-            <div class="bg-white rounded-[1.75rem] shadow-sm border border-stone-200 p-8 space-y-6">
-                <div class="flex items-center justify-between border-b border-stone-100 pb-4">
-                    <h3 class="text-xl font-bold text-stone-800">Yedekleme</h3>
-                    <span class="text-xs font-semibold text-stone-400 bg-stone-100 px-3 py-1 rounded-full">.xlsx</span>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Left Download Box -->
-                    <div class="border border-stone-200 rounded-2xl p-8 flex flex-col items-center justify-center text-center bg-stone-50/50 space-y-3">
-                        <i class="fa-solid fa-file-excel text-5xl text-emerald-600 mb-1"></i>
-                        <h4 class="text-base font-bold text-stone-800">Tüm Verileri İndir</h4>
-                        <p class="text-xs text-stone-400">Tüm veriler tek bir Excel dosyasına aktarılır.</p>
-                        <button onclick="exportAllDataToExcel()" class="mt-2 px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-stone-900 font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-download"></i> Excel İndir
-                        </button>
-                    </div>
-
-                    <!-- Right Upload Box -->
-                    <div id="backupFileDropzone" onclick="document.getElementById('backupFileInput').click()" class="relative border-2 border-dashed border-stone-300 rounded-2xl p-8 text-center cursor-pointer transition-all hover:border-amber-400 hover:bg-amber-50/40 flex flex-col items-center justify-center space-y-2">
-                        <input type="file" id="backupFileInput" accept=".xlsx,.xls" class="hidden" onchange="handleBackupFileSelect(event)">
-
-                        <div id="backupDropzoneIdle" class="flex flex-col items-center justify-center">
-                            <i class="fa-solid fa-cloud-arrow-up text-4xl text-amber-400 mb-2"></i>
-                            <p class="text-sm font-semibold text-stone-700">Yedek dosyasını buraya sürükleyin</p>
-                            <p class="text-xs text-stone-400 mt-1">veya tıklayarak dosya seçin</p>
-                        </div>
-
-                        <div id="backupDropzoneSuccess" class="hidden flex flex-col items-center justify-center">
-                            <i class="fa-solid fa-circle-check text-4xl text-emerald-500 mb-2"></i>
-                            <p class="text-sm font-semibold text-stone-800" id="backupDropzoneSuccessText">Veriler geri yüklendi.</p>
-                            <p class="text-xs text-stone-500 mt-1" id="backupDropzoneSuccessSub"></p>
-                            <button onclick="event.stopPropagation(); resetBackupDropzone();" class="mt-3 text-xs font-semibold text-amber-600 hover:underline">Başka bir dosya yükle</button>
-                        </div>
-
-                        <div id="backupDropzoneError" class="hidden flex flex-col items-center justify-center">
-                            <i class="fa-solid fa-triangle-exclamation text-4xl text-red-500 mb-2"></i>
-                            <p class="text-sm font-semibold text-red-600" id="backupDropzoneErrorText">Dosya okunamadı.</p>
-                            <button onclick="event.stopPropagation(); resetBackupDropzone();" class="mt-3 text-xs font-semibold text-stone-500 hover:underline">Tekrar dene</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-    </main>
+            </main>
 
     </div>
 
@@ -872,18 +860,17 @@
                 updatePanelStats();
                 renderPosStandNav();
                 setTimeout(() => { renderOdemeSekliChart(); renderPosCharts(); }, 50);
-            } else if (tabId === 'urunler') {
-                renderUrunlerView();
             } else if (tabId === 'ciroOrani') {
                 renderCiroOraniTable();
                 renderPieCategoryNav();
-                setTimeout(renderCharts, 50);
+                renderUrunGunlukCategoryNav();
+                renderUrunGunlukProductList();
+                setTimeout(() => { renderCharts(); renderUrunGunlukSatisChart(); }, 50);
             } else if (tabId === 'ayarlar') {
                 renderSettingsView();
-            } else if (tabId === 'urunVeriGirisi') {
+            } else if (tabId === 'veriGirisi') {
                 renderUrunCategoryTabs();
                 renderUrunSelectOptions();
-            } else if (tabId === 'standVeriGirisi') {
                 renderStandButtons();
                 renderPosSelectOptions();
             }
@@ -896,13 +883,10 @@
 
         const pageTitles = {
             'panel': 'Ana Panel',
-            'odeme': 'Ödeme Şekli Analizi',
-            'urunler': 'Ürün Raporu',
+            'odeme': 'Tahsilat Analizi',
             'ciroOrani': 'Ciro Oranı Analizi',
-            'standVeriGirisi': 'Ciro Veri Girişi',
-            'urunVeriGirisi': 'Ürün Veri Girişi',
-            'ayarlar': 'Sistem ve Veri Ayarları',
-            'indir': 'Yedekleme'
+            'veriGirisi': 'Veri Girişi',
+            'ayarlar': 'Sistem ve Veri Ayarları'
         };
 
         function getTodayString() {
@@ -1276,8 +1260,11 @@
             renderUrunlerView();
             renderCiroOraniTable();
             renderPieCategoryNav();
+            renderUrunGunlukCategoryNav();
+            renderUrunGunlukProductList();
             renderPosStandNav();
             renderCharts();
+            renderUrunGunlukSatisChart();
             renderPosCharts();
             renderOdemeTable();
             renderOdemeSekliChart();
@@ -1288,8 +1275,10 @@
         let chartGunlukInstance = null;
         let chartToplamInstance = null;
         let chartUrunBarInstance = null;
+        let chartUrunGunlukSatisInstance = null;
+        let activeUrunGunlukCategory = 'Tümü';
+        let selectedUrunGunlukProduct = null;
         let chartPanelToplamCiroInstance = null;
-        let chartPanelToplamCiroKumulatifInstance = null;
         let chartPanelOdemeSekliInstance = null;
         let chartPanelOdemeSekliPieInstance = null;
         let panelOdemeSekliMode = 'gunluk';
@@ -2309,6 +2298,141 @@
             renderCharts();
         }
 
+        function renderUrunGunlukCategoryNav() {
+            const navContainer = document.getElementById('urunGunlukCategoryNav');
+            if (!navContainer) return;
+
+            const cats = sortUrunCategories(Object.keys(urunCategories));
+            if (!cats.includes(activeUrunGunlukCategory)) {
+                const def = getDefaultUrunCategory(cats);
+                activeUrunGunlukCategory = cats.includes(def) ? def : (cats[0] || 'Tümü');
+            }
+
+            navContainer.innerHTML = cats.map(cat => {
+                const isActive = (cat === activeUrunGunlukCategory);
+                return `
+                    <button onclick="setUrunGunlukCategory('${cat}')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${isActive ? 'bg-amber-500 text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900'}">${cat}</button>
+                `;
+            }).join('');
+        }
+
+        function getUrunGunlukProducts() {
+            if (activeUrunGunlukCategory === 'Tümü') {
+                let all = [];
+                sortUrunCategories(Object.keys(urunCategories)).forEach(cat => {
+                    all = all.concat(urunCategories[cat] || []);
+                });
+                return all;
+            }
+            return urunCategories[activeUrunGunlukCategory] || [];
+        }
+
+        function setUrunGunlukCategory(cat) {
+            activeUrunGunlukCategory = cat;
+            const products = getUrunGunlukProducts();
+            if (!products.includes(selectedUrunGunlukProduct)) {
+                selectedUrunGunlukProduct = products.length ? products[0] : null;
+            }
+            renderUrunGunlukCategoryNav();
+            renderUrunGunlukProductList();
+            renderUrunGunlukSatisChart();
+        }
+
+        function renderUrunGunlukProductList() {
+            const listContainer = document.getElementById('urunGunlukProductList');
+            if (!listContainer) return;
+
+            const products = getUrunGunlukProducts();
+            if (!products.includes(selectedUrunGunlukProduct)) {
+                selectedUrunGunlukProduct = products.length ? products[0] : null;
+            }
+
+            if (!products.length) {
+                listContainer.innerHTML = `<p class="p-4 text-xs font-semibold text-stone-400 text-center">Bu kategoride ürün bulunmuyor.</p>`;
+                return;
+            }
+
+            listContainer.innerHTML = products.map(p => {
+                const isActive = (p === selectedUrunGunlukProduct);
+                return `
+                    <button onclick="selectUrunGunlukProduct('${p.replace(/'/g, "\\'")}')" class="w-full text-left px-4 py-3 text-xs font-semibold transition-all ${isActive ? 'bg-amber-500 text-stone-900' : 'text-stone-600 hover:bg-white'}">${p}</button>
+                `;
+            }).join('');
+        }
+
+        function selectUrunGunlukProduct(product) {
+            selectedUrunGunlukProduct = product;
+            renderUrunGunlukProductList();
+            renderUrunGunlukSatisChart();
+        }
+
+        function renderUrunGunlukSatisChart() {
+            const ctx = document.getElementById('chartUrunGunlukSatis');
+            const emptyText = document.getElementById('urunGunlukEmptyText');
+            if (!ctx) return;
+
+            if (chartUrunGunlukSatisInstance) chartUrunGunlukSatisInstance.destroy();
+
+            if (!selectedUrunGunlukProduct) {
+                if (emptyText) emptyText.textContent = 'Lütfen bir ürün seçin.';
+                chartUrunGunlukSatisInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: ['Veri Yok'], datasets: [{ label: 'Satış Adedi', data: [0], backgroundColor: '#e5e7eb', borderRadius: 6 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } } }
+                });
+                return;
+            }
+
+            const dateMap = {};
+            urunHistory.filter(i => i.product === selectedUrunGunlukProduct).forEach(i => {
+                dateMap[i.date] = (dateMap[i.date] || 0) + i.salesCount;
+            });
+
+            const dates = Object.keys(dateMap).sort();
+            const counts = dates.map(d => dateMap[d]);
+
+            if (emptyText) emptyText.textContent = dates.length ? '' : `"${selectedUrunGunlukProduct}" için henüz satış verisi bulunmuyor.`;
+
+            chartUrunGunlukSatisInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dates.length ? dates : ['Veri Yok'],
+                    datasets: [{
+                        label: selectedUrunGunlukProduct,
+                        data: dates.length ? counts : [0],
+                        backgroundColor: '#f59e0b',
+                        borderRadius: 6,
+                        maxBarThickness: 46
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            display: dates.length > 0,
+                            anchor: 'end',
+                            align: 'end',
+                            clamp: true,
+                            color: '#44403c',
+                            font: { family: 'Inter', size: 11, weight: '700' },
+                            formatter: (val) => (val && val > 0) ? `${val}` : ''
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx2) => ` ${selectedUrunGunlukProduct}: ${ctx2.raw} adet`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
         function setUrunGunlukDate(value, sourceId) {
             ['chartGunlukDate', 'chartGunlukDateBar'].forEach(id => {
                 const el = document.getElementById(id);
@@ -2498,7 +2622,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'top', labels: { font: { family: 'Inter', size: 11 } } },
+                        legend: { display: false },
                         datalabels: {
                             display: true,
                             anchor: 'end',
@@ -2904,11 +3028,9 @@
 
         function renderPanelCharts() {
             const ctxLine = document.getElementById('chartPanelToplamCiro');
-            const ctxKumulatif = document.getElementById('chartPanelToplamCiroKumulatif');
-            if (!ctxLine || !ctxKumulatif) return;
+            if (!ctxLine) return;
 
             if (chartPanelToplamCiroInstance) chartPanelToplamCiroInstance.destroy();
-            if (chartPanelToplamCiroKumulatifInstance) chartPanelToplamCiroKumulatifInstance.destroy();
 
             const dateMap = {};
             standHistory.forEach(i => {
@@ -2926,9 +3048,6 @@
             const nakitArr = dates.map(d => dateMap[d].nakit);
             const krediArr = dates.map(d => dateMap[d].kredi);
 
-            let runningSum = 0;
-            const cumulativeTotals = totals.map(t => { runningSum += t; return runningSum; });
-
             chartPanelToplamCiroInstance = new Chart(ctxLine, {
                 type: 'line',
                 data: {
@@ -2943,38 +3062,6 @@
                             const gradient = ctx.createLinearGradient(0, 0, 0, 250);
                             gradient.addColorStop(0, 'rgba(245, 158, 11, 0.45)');
                             gradient.addColorStop(1, 'rgba(245, 158, 11, 0.01)');
-                            return gradient;
-                        },
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-
-            chartPanelToplamCiroKumulatifInstance = new Chart(ctxKumulatif, {
-                type: 'line',
-                data: {
-                    labels: dates.length ? dates : ['Veri Yok'],
-                    datasets: [{
-                        label: 'Toplam Ciro',
-                        data: cumulativeTotals.length ? cumulativeTotals : [0],
-                        borderColor: '#0f766e',
-                        borderWidth: 2.5,
-                        backgroundColor: (context) => {
-                            const ctx = context.chart.ctx;
-                            const gradient = ctx.createLinearGradient(0, 0, 0, 250);
-                            gradient.addColorStop(0, 'rgba(15, 118, 110, 0.45)');
-                            gradient.addColorStop(1, 'rgba(15, 118, 110, 0.01)');
                             return gradient;
                         },
                         fill: true,
@@ -3066,12 +3153,12 @@
                     plugins: {
                         legend: { display: false },
                         datalabels: {
-                            display: true,
+                            display: panelOdemeSekliMode !== 'tumGunler',
                             anchor: 'end',
                             align: 'start',
                             clamp: true,
-                            color: '#ffffff',
-                            font: { family: 'Inter', size: 10, weight: '700' },
+                            color: '#1c1917',
+                            font: { family: 'Inter', size: 13, weight: '700' },
                             formatter: (val) => (val && val > 0) ? `₺${val.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}` : ''
                         }
                     },
@@ -3108,7 +3195,16 @@
                         maintainAspectRatio: false,
                         plugins: {
                             legend: { display: false },
-                            datalabels: { display: false },
+                            datalabels: {
+                                display: pieHasData,
+                                color: '#ffffff',
+                                font: { family: 'Inter', size: 12, weight: '700' },
+                                formatter: (val, ctx) => {
+                                    const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    const pct = total > 0 ? (val / total * 100) : 0;
+                                    return `%${pct.toLocaleString('tr-TR', { maximumFractionDigits: 1 })}\n₺${val.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`;
+                                }
+                            },
                             tooltip: {
                                 callbacks: {
                                     label: (ctx) => {
@@ -3211,6 +3307,8 @@
             // Uygulamanın diğer ilgili sayfaları anında güncelleniyor
             renderUrunCategoryTabs();
             renderPieCategoryNav();
+            renderUrunGunlukCategoryNav();
+            renderUrunGunlukProductList();
             renderCiroOraniTable();
             renderUrunlerView();
 
@@ -3364,6 +3462,8 @@
             saveState();
             renderUrunCategoryTabs();
             renderPieCategoryNav();
+            renderUrunGunlukCategoryNav();
+            renderUrunGunlukProductList();
             renderSettingsView();
             renderCiroOraniTable();
 
@@ -3450,6 +3550,9 @@
                 renderUrunCategoryTabs();
                 renderSettingsView();
                 renderCiroOraniTable();
+                if (selectedUrunGunlukProduct === productName) selectedUrunGunlukProduct = null;
+                renderUrunGunlukProductList();
+                renderUrunGunlukSatisChart();
                 showToast(`"${productName}" ürünü silindi.`);
             }
         }
@@ -3478,10 +3581,14 @@
             delete urunCategories[catName];
 
             if (activeUrunCategory === catName) activeUrunCategory = 'Tümü';
+            if (activeUrunGunlukCategory === catName) activeUrunGunlukCategory = 'Tümü';
 
             saveState();
             renderUrunCategoryTabs();
             renderPieCategoryNav();
+            renderUrunGunlukCategoryNav();
+            renderUrunGunlukProductList();
+            renderUrunGunlukSatisChart();
             renderSettingsView();
             renderCiroOraniTable();
             renderUrunlerView();
