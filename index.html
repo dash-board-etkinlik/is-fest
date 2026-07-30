@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAAN Dashboard</title>
+    <title>İs-Fest</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -80,7 +80,7 @@
     <!-- Giriş Ekranı: Firebase Authentication ile korunur, ortak şifre burada girilir -->
     <div id="loginScreen" class="min-h-screen flex items-center justify-center bg-gradient-to-b from-stone-950 to-stone-900 px-4">
         <div class="w-full max-w-sm bg-stone-900/60 backdrop-blur border border-stone-700 rounded-[1.75rem] p-8 shadow-2xl">
-            <h1 class="text-2xl font-display font-extrabold tracking-wider text-amber-400 text-center mb-1 [text-shadow:0_0_18px_rgba(245,158,11,0.55)]">İstanbulFest</h1>
+            <h1 class="text-2xl font-display font-extrabold tracking-wider text-amber-400 text-center mb-1 [text-shadow:0_0_18px_rgba(245,158,11,0.55)]">İs-Fest</h1>
             <p class="text-xs text-stone-400 text-center mb-6">Devam etmek için şifreyi girin</p>
             <input type="password" id="loginPasswordInput" placeholder="Şifre" class="w-full px-4 py-3 bg-stone-950/70 border border-stone-600 rounded-xl text-sm text-white placeholder-stone-500 focus:outline-none focus:border-amber-500 mb-3" onkeydown="if(event.key==='Enter') attemptLogin()">
             <button onclick="attemptLogin()" id="loginButton" class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-stone-900 font-bold rounded-xl transition-colors">Giriş Yap</button>
@@ -1817,13 +1817,27 @@
 
             let headerIdx = -1;
             for (let i = 0; i < aoa.length; i++) {
-                const cells = (aoa[i] || []).map(c => trNormalize(c));
-                const hasProduct = cells.some(c => ['urun', 'product', 'isim'].some(kw => c.includes(kw)));
-                const hasCountOrAmount = cells.some(c => [
-                    'adet', 'miktar', 'satisadedi', 'quantity', 'qty', 'count', 'satis',
-                    'tutar', 'tutari', 'amount', 'toplam'
-                ].some(kw => c.includes(kw)));
-                if (hasProduct && hasCountOrAmount) {
+                const rawCells = aoa[i] || [];
+                const nonEmptyCells = rawCells.filter(c => c !== '' && c !== undefined && c !== null);
+                // Gerçek bir sütun başlığı satırında birden çok dolu hücre olur.
+                // Tek hücreli "Ürün Satış Raporu" gibi rapor başlıkları burada elenir,
+                // aksi halde "Satış" kelimesindeki "satis" geçişi yanlışlıkla adet/tutar
+                // anahtar kelimesiyle eşleşip o satırı başlık sanabiliyor.
+                if (nonEmptyCells.length < 3) continue;
+
+                const productColIdx = rawCells.findIndex(c => {
+                    const n = trNormalize(c);
+                    return n && ['urun', 'product', 'isim'].some(kw => n.includes(kw));
+                });
+                const countColIdx = rawCells.findIndex(c => {
+                    const n = trNormalize(c);
+                    return n && [
+                        'adet', 'miktar', 'satisadedi', 'quantity', 'qty', 'count',
+                        'tutar', 'tutari', 'amount', 'toplam'
+                    ].some(kw => n.includes(kw));
+                });
+                // Ürün ve adet/tutar başlıkları FARKLI sütunlarda olmalı
+                if (productColIdx !== -1 && countColIdx !== -1 && productColIdx !== countColIdx) {
                     headerIdx = i;
                     break;
                 }
@@ -1871,7 +1885,8 @@
             const dateEl = document.getElementById('urunInputDate');
             const fallbackDate = (dateEl && dateEl.value) || TODAY_STR;
             let importedCount = 0;
-            const newProductNames = [];
+            let skippedCount = 0;
+            const skippedNames = [];
 
             rows.forEach(row => {
                 const rawProduct = row[productKey];
@@ -1882,40 +1897,19 @@
                 if (isNaN(countVal) || countVal <= 0) return;
 
                 const normProduct = trNormalize(rawProduct);
-                let targetCategory, targetProduct;
 
-                if (productLookup[normProduct]) {
-                    targetCategory = productLookup[normProduct].category;
-                    targetProduct = productLookup[normProduct].product;
-                } else {
-                    const catFromFile = categoryKey ? String(row[categoryKey]).trim() : '';
-                    const matchedCatKey = Object.keys(urunCategories).find(c => trNormalize(c) === trNormalize(catFromFile));
-
-                    if (matchedCatKey) {
-                        targetCategory = matchedCatKey;
-                    } else if (catFromFile) {
-                        targetCategory = catFromFile;
-                        if (!urunCategories[targetCategory]) urunCategories[targetCategory] = [];
-                    } else if (activeUrunCategory && activeUrunCategory !== 'Tümü') {
-                        targetCategory = activeUrunCategory;
-                    } else {
-                        targetCategory = 'İçe Aktarılan';
-                        if (!urunCategories[targetCategory]) urunCategories[targetCategory] = [];
-                    }
-
-                    targetProduct = String(rawProduct).trim();
-                    if (!urunCategories[targetCategory].includes(targetProduct)) {
-                        urunCategories[targetCategory].push(targetProduct);
-                        newProductNames.push(targetProduct);
-                    }
-                    productLookup[normProduct] = { category: targetCategory, product: targetProduct };
+                // Eşleşmeyen ürünleri yok say (yeni ürün/kategori OLUŞTURMA)
+                if (!productLookup[normProduct]) {
+                    skippedCount++;
+                    skippedNames.push(String(rawProduct).trim());
+                    return;
                 }
 
-                let entryDate = fallbackDate;
-                if (dateKey && row[dateKey] !== '' && row[dateKey] !== undefined) {
-                    const parsed = parseDateValue(row[dateKey]);
-                    if (parsed) entryDate = parsed;
-                }
+                const targetCategory = productLookup[normProduct].category;
+                const targetProduct = productLookup[normProduct].product;
+
+                // Tarih her zaman üstteki tarih girişinden alınır (dosyadaki tarih sütunu dikkate alınmaz)
+                const entryDate = fallbackDate;
 
                 urunHistory.unshift({
                     id: Date.now() + Math.floor(Math.random() * 100000),
@@ -1929,21 +1923,25 @@
             });
 
             if (importedCount === 0) {
-                showDropzoneError('Dosyadaki satırlar okunamadı.');
+                showDropzoneError('Eşleşen ürün bulunamadı. Dosyadaki ürün adları mevcut ürünlerinizle eşleşmiyor.');
+                console.warn('Eşleşmeyen ürünler:', skippedNames);
                 return;
             }
 
             const stText = document.getElementById('dropzoneSuccessText');
             const stSub = document.getElementById('dropzoneSuccessSub');
             if (stText) stText.textContent = `"${fileName}" yüklendi.`;
-            if (stSub) stSub.textContent = `${importedCount} satır aktarıldı${newProductNames.length ? `, ${newProductNames.length} yeni ürün eklendi` : ''}.`;
+            if (stSub) stSub.textContent = `${importedCount} satır aktarıldı${skippedCount ? `, ${skippedCount} eşleşmeyen ürün yok sayıldı` : ''}.`;
             showDropzoneState('success');
 
             renderUrunCategoryTabs();
             renderUrunHistory();
             renderCiroOraniTable();
 
-            showToast(`${importedCount} kayıt başarıyla aktarıldı.`);
+            if (skippedCount > 0) {
+                console.warn('Eşleşmediği için yok sayılan ürünler:', skippedNames);
+            }
+            showToast(`${importedCount} kayıt aktarıldı${skippedCount ? `, ${skippedCount} ürün eşleşmediği için atlandı` : ''}.`);
         }
 
         function renderStandButtons() {
