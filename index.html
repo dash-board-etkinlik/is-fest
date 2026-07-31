@@ -297,31 +297,31 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white p-5 rounded-[1.75rem] shadow-sm border border-stone-200">
                     <p class="text-sm font-extrabold text-stone-800 mb-2">En Çok Satılan Ürün</p>
-                    <p class="text-[11px] font-semibold text-stone-400">Toplam</p>
-                    <h4 class="text-xs font-bold text-stone-800 truncate mb-1.5" id="ciroTopSoldProduct">-</h4>
                     <p class="text-[11px] font-semibold text-stone-400">Günlük</p>
-                    <h4 class="text-xs font-bold text-stone-800 truncate" id="ciroTopSoldProductDaily">-</h4>
+                    <h4 class="text-xs font-bold text-stone-800 truncate mb-1.5" id="ciroTopSoldProductDaily">-</h4>
+                    <p class="text-[11px] font-semibold text-stone-400">Toplam</p>
+                    <h4 class="text-xs font-bold text-stone-800 truncate" id="ciroTopSoldProduct">-</h4>
                 </div>
                 <div class="bg-white p-5 rounded-[1.75rem] shadow-sm border border-stone-200">
                     <p class="text-sm font-extrabold text-stone-800 mb-2">En Az Satılan Ürün</p>
-                    <p class="text-[11px] font-semibold text-stone-400">Toplam</p>
-                    <h4 class="text-xs font-bold text-stone-800 truncate mb-1.5" id="ciroLeastSoldProduct">-</h4>
                     <p class="text-[11px] font-semibold text-stone-400">Günlük</p>
-                    <h4 class="text-xs font-bold text-stone-800 truncate" id="ciroLeastSoldProductDaily">-</h4>
+                    <h4 class="text-xs font-bold text-stone-800 truncate mb-1.5" id="ciroLeastSoldProductDaily">-</h4>
+                    <p class="text-[11px] font-semibold text-stone-400">Toplam</p>
+                    <h4 class="text-xs font-bold text-stone-800 truncate" id="ciroLeastSoldProduct">-</h4>
                 </div>
                 <div class="bg-white p-5 rounded-[1.75rem] shadow-sm border border-stone-200">
                     <p class="text-sm font-extrabold text-stone-800 mb-2">En Yüksek Cirolu Ürün</p>
-                    <p class="text-[11px] font-semibold text-stone-400">Toplam</p>
-                    <h4 class="text-xs font-bold text-stone-800 truncate mb-1.5" id="ciroTopRevenueProduct">-</h4>
                     <p class="text-[11px] font-semibold text-stone-400">Günlük</p>
-                    <h4 class="text-xs font-bold text-stone-800 truncate" id="ciroTopRevenueProductDaily">-</h4>
+                    <h4 class="text-xs font-bold text-stone-800 truncate mb-1.5" id="ciroTopRevenueProductDaily">-</h4>
+                    <p class="text-[11px] font-semibold text-stone-400">Toplam</p>
+                    <h4 class="text-xs font-bold text-stone-800 truncate" id="ciroTopRevenueProduct">-</h4>
                 </div>
                 <div class="bg-white p-5 rounded-[1.75rem] shadow-sm border border-stone-200">
                     <p class="text-sm font-extrabold text-stone-800 mb-2">En Düşük Cirolu Ürün</p>
-                    <p class="text-[11px] font-semibold text-stone-400">Toplam</p>
-                    <h4 class="text-xs font-bold text-stone-800 truncate mb-1.5" id="ciroLeastRevenueProduct">-</h4>
                     <p class="text-[11px] font-semibold text-stone-400">Günlük</p>
-                    <h4 class="text-xs font-bold text-stone-800 truncate" id="ciroLeastRevenueProductDaily">-</h4>
+                    <h4 class="text-xs font-bold text-stone-800 truncate mb-1.5" id="ciroLeastRevenueProductDaily">-</h4>
+                    <p class="text-[11px] font-semibold text-stone-400">Toplam</p>
+                    <h4 class="text-xs font-bold text-stone-800 truncate" id="ciroLeastRevenueProduct">-</h4>
                 </div>
             </div>
 
@@ -3167,15 +3167,15 @@
                     labels: odemeLabels,
                     datasets: [
                         {
-                            label: 'Kredi',
-                            data: odemeKredi,
-                            backgroundColor: '#f59e0b',
-                            borderRadius: 6
-                        },
-                        {
                             label: 'Nakit',
                             data: odemeNakit,
                             backgroundColor: '#0f766e',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Kredi',
+                            data: odemeKredi,
+                            backgroundColor: '#f59e0b',
                             borderRadius: 6
                         }
                     ]
