@@ -215,14 +215,26 @@
             </div>
 
             <div class="bg-white p-6 rounded-[1.75rem] shadow-sm border border-stone-200">
-                <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
-                    <h3 class="text-lg font-bold text-stone-800">Tahsilat Dağılımı</h3>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <h3 class="text-lg font-bold text-stone-800 whitespace-nowrap">Tahsilat Dağılımı</h3>
+                    <div class="inline-flex p-1 bg-stone-100 rounded-xl border border-stone-200">
+                        <button onclick="setPanelOdemeSekliPieMode('gunluk')" id="panelOdemeModeBtnPie-gunluk" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all">Günlük</button>
+                        <button onclick="setPanelOdemeSekliPieMode('toplam')" id="panelOdemeModeBtnPie-toplam" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all">Toplam</button>
+                    </div>
                 </div>
-                <div class="flex flex-col md:flex-row items-center gap-6">
-                    <div id="chartPanelOdemeSekliPieLegend" class="pie-legend"></div>
-                    <div class="w-full max-w-xs mx-auto h-72 relative flex items-center justify-center flex-1">
+                <div class="grid grid-cols-1 sm:grid-cols-3 items-center gap-3 mb-4">
+                    <div></div>
+                    <div></div>
+                    <div class="flex justify-start sm:justify-end">
+                        <input type="date" id="panelOdemeSekliDatePie" onchange="renderOdemeSekliPieChart()" class="px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 items-center gap-6">
+                    <div id="chartPanelOdemeSekliPieLegend" class="pie-legend justify-self-start"></div>
+                    <div class="w-80 h-80 relative flex items-center justify-center mx-auto">
                         <canvas id="chartPanelOdemeSekliPie"></canvas>
                     </div>
+                    <div></div>
                 </div>
             </div>
 
@@ -859,7 +871,7 @@
                 renderOdemeTable();
                 updatePanelStats();
                 renderPosStandNav();
-                setTimeout(() => { renderOdemeSekliChart(); renderPosCharts(); }, 50);
+                setTimeout(() => { renderOdemeSekliChart(); renderOdemeSekliPieChart(); renderPosCharts(); }, 50);
             } else if (tabId === 'ciroOrani') {
                 renderCiroOraniTable();
                 renderPieCategoryNav();
@@ -1268,6 +1280,7 @@
             renderPosCharts();
             renderOdemeTable();
             renderOdemeSekliChart();
+            renderOdemeSekliPieChart();
             updatePanelStats();
             renderPanelCharts();
         }
@@ -1282,6 +1295,7 @@
         let chartPanelOdemeSekliInstance = null;
         let chartPanelOdemeSekliPieInstance = null;
         let panelOdemeSekliMode = 'gunluk';
+        let panelOdemeSekliPieMode = 'gunluk';
         let ciroCategoryFilterValue = 'Tümü';
         let ciroOraniTableMode = 'gunluk';
         let chartPosGunlukInstance = null;
@@ -1676,8 +1690,8 @@
                     <td class="p-4 text-center text-stone-400">-</td>
                     <td class="p-4 text-center text-stone-400">-</td>
                     <td class="p-4 text-right font-black text-amber-800 font-mono">₺${filterTotalRevenue.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
-                    <td class="p-4"><span class="text-xs font-bold font-mono text-amber-900">%${filterSalesPercent.toFixed(1)}</span></td>
-                    <td class="p-4"><span class="text-xs font-bold font-mono text-emerald-900">%${filterRevenuePercent.toFixed(1)}</span></td>
+                    <td class="p-3.5 text-right"><span class="text-xs font-mono font-bold text-amber-900">%${filterSalesPercent.toFixed(1)}</span></td>
+                    <td class="p-3.5 text-right"><span class="text-xs font-mono font-bold text-emerald-900">%${filterRevenuePercent.toFixed(1)}</span></td>
                 </tr>
             `;
         }
@@ -1692,7 +1706,7 @@
                 .replace(/[^a-z0-9]/g, '');
         }
 
-        const URUN_CATEGORY_PRIORITY = ['sogukicecek', 'sicakicecek', 'digericecek', 'atistirmalik', 'tastopia'];
+        const URUN_CATEGORY_PRIORITY = ['classic', 'special', 'fresh', 'atistirmalik', 'sandviclertatli', 'kampanyalar'];
 
         function sortUrunCategories(cats) {
             return [...cats].sort((a, b) => {
@@ -1707,7 +1721,7 @@
         }
 
         function getDefaultUrunCategory(cats) {
-            const target = cats.find(c => trNormalize(c).includes('sogukicecek'));
+            const target = cats.find(c => trNormalize(c).includes('classic'));
             return target || 'Tümü';
         }
 
@@ -2024,6 +2038,7 @@
                 updatePanelStats();
                 renderPosStandNav();
                 renderOdemeSekliChart();
+                renderOdemeSekliPieChart();
                 renderPosCharts();
             }
 
@@ -2544,12 +2559,28 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
-                    datalabels: { display: false },
+                    datalabels: {
+                        display: (ctx) => {
+                            const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                            const val = ctx.dataset.data[ctx.dataIndex];
+                            const pct = total > 0 ? (val / total * 100) : 0;
+                            return pct >= 10;
+                        },
+                        color: '#1c1917',
+                        font: { family: 'Inter', size: 12, weight: '700' },
+                        formatter: (val, ctx) => {
+                            const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                            const pct = total > 0 ? (val / total * 100) : 0;
+                            return `${val} Adet\n%${pct.toLocaleString('tr-TR', { maximumFractionDigits: 1 })}`;
+                        }
+                    },
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
                                 const name = ctx.chart.data.labels[ctx.dataIndex] || '';
-                                return ` ${name} : ${ctx.raw}`;
+                                const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                const pct = total > 0 ? (ctx.raw / total * 100) : 0;
+                                return ` ${name} : ${ctx.raw} Adet (%${pct.toLocaleString('tr-TR', { maximumFractionDigits: 1 })})`;
                             }
                         }
                     }
@@ -3080,12 +3111,7 @@
 
         }
 
-        function renderOdemeSekliChart() {
-            const ctxBar = document.getElementById('chartPanelOdemeSekli');
-            if (!ctxBar) return;
-
-            if (chartPanelOdemeSekliInstance) chartPanelOdemeSekliInstance.destroy();
-
+        function buildOdemeSekliDateMap() {
             const dateMap = {};
             standHistory.forEach(i => {
                 if (!dateMap[i.date]) {
@@ -3096,7 +3122,16 @@
                 dateMap[i.date].kredi += krediVal;
                 dateMap[i.date].total += (i.nakit + krediVal);
             });
+            return dateMap;
+        }
 
+        function renderOdemeSekliChart() {
+            const ctxBar = document.getElementById('chartPanelOdemeSekli');
+            if (!ctxBar) return;
+
+            if (chartPanelOdemeSekliInstance) chartPanelOdemeSekliInstance.destroy();
+
+            const dateMap = buildOdemeSekliDateMap();
             const dates = Object.keys(dateMap).sort();
             const nakitArr = dates.map(d => dateMap[d].nakit);
             const krediArr = dates.map(d => dateMap[d].kredi);
@@ -3167,55 +3202,6 @@
                 }
             });
 
-            const ctxPie = document.getElementById('chartPanelOdemeSekliPie');
-            if (ctxPie) {
-                if (chartPanelOdemeSekliPieInstance) chartPanelOdemeSekliPieInstance.destroy();
-
-                const pieKrediToplam = odemeKredi.reduce((a, b) => a + b, 0);
-                const pieNakitToplam = odemeNakit.reduce((a, b) => a + b, 0);
-                const pieHasData = (pieKrediToplam + pieNakitToplam) > 0;
-
-                renderPieLegend('chartPanelOdemeSekliPieLegend', ['Kredi', 'Nakit'], pieHasData ? ['#f59e0b', '#0f766e'] : ['#e5e7eb', '#d6d3d1']);
-
-                chartPanelOdemeSekliPieInstance = new Chart(ctxPie, {
-                    type: 'pie',
-                    data: {
-                        labels: ['Kredi', 'Nakit'],
-                        datasets: [{
-                            data: pieHasData ? [pieKrediToplam, pieNakitToplam] : [1, 1],
-                            backgroundColor: pieHasData ? ['#f59e0b', '#0f766e'] : ['#e5e7eb', '#d6d3d1'],
-                            borderWidth: 2,
-                            borderColor: '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            datalabels: {
-                                display: pieHasData,
-                                color: '#ffffff',
-                                font: { family: 'Inter', size: 12, weight: '700' },
-                                formatter: (val, ctx) => {
-                                    const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                    const pct = total > 0 ? (val / total * 100) : 0;
-                                    return `%${pct.toLocaleString('tr-TR', { maximumFractionDigits: 1 })}\n₺${val.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`;
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: (ctx) => {
-                                        const name = ctx.chart.data.labels[ctx.dataIndex] || '';
-                                        return ` ${name}: ₺${ctx.raw.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
             updatePanelOdemeModeButtons();
         }
 
@@ -3227,16 +3213,108 @@
         function updatePanelOdemeModeButtons() {
             const modeLabels = { gunluk: 'gunluk', toplam: 'toplam', tumGunler: 'tumGunler' };
             Object.keys(modeLabels).forEach(m => {
+                const activeClass = 'px-4 py-2 text-xs font-semibold rounded-lg transition-all bg-amber-500 text-stone-900 shadow-sm';
+                const inactiveClass = 'px-4 py-2 text-xs font-semibold rounded-lg transition-all text-stone-600 hover:text-stone-900';
                 const btn = document.getElementById('panelOdemeModeBtn-' + m);
-                if (!btn) return;
-                if (m === panelOdemeSekliMode) {
-                    btn.className = 'px-4 py-2 text-xs font-semibold rounded-lg transition-all bg-amber-500 text-stone-900 shadow-sm';
-                } else {
-                    btn.className = 'px-4 py-2 text-xs font-semibold rounded-lg transition-all text-stone-600 hover:text-stone-900';
-                }
+                if (btn) btn.className = (m === panelOdemeSekliMode) ? activeClass : inactiveClass;
             });
             const dateInput = document.getElementById('panelOdemeSekliDate');
             if (dateInput) dateInput.disabled = (panelOdemeSekliMode !== 'gunluk');
+        }
+
+        function renderOdemeSekliPieChart() {
+            const ctxPie = document.getElementById('chartPanelOdemeSekliPie');
+            if (!ctxPie) return;
+
+            if (chartPanelOdemeSekliPieInstance) chartPanelOdemeSekliPieInstance.destroy();
+
+            const dateMap = buildOdemeSekliDateMap();
+            const dates = Object.keys(dateMap).sort();
+
+            const dateInputPie = document.getElementById('panelOdemeSekliDatePie');
+            let pieKrediToplam, pieNakitToplam;
+
+            if (panelOdemeSekliPieMode === 'gunluk') {
+                let selectedDate = dateInputPie ? dateInputPie.value : '';
+                if (!selectedDate) {
+                    selectedDate = TODAY_STR;
+                    if (dateInputPie) dateInputPie.value = TODAY_STR;
+                }
+                const dayData = dateMap[selectedDate] || { nakit: 0, kredi: 0 };
+                pieKrediToplam = dayData.kredi;
+                pieNakitToplam = dayData.nakit;
+            } else if (panelOdemeSekliPieMode === 'toplam') {
+                let sumNakit = 0, sumKredi = 0;
+                dates.forEach(d => { sumNakit += dateMap[d].nakit; sumKredi += dateMap[d].kredi; });
+                pieKrediToplam = sumKredi;
+                pieNakitToplam = sumNakit;
+            } else {
+                let sumNakit = 0, sumKredi = 0;
+                dates.forEach(d => { sumNakit += dateMap[d].nakit; sumKredi += dateMap[d].kredi; });
+                pieKrediToplam = sumKredi;
+                pieNakitToplam = sumNakit;
+            }
+
+            const pieHasData = (pieKrediToplam + pieNakitToplam) > 0;
+
+            renderPieLegend('chartPanelOdemeSekliPieLegend', ['Kredi', 'Nakit'], pieHasData ? ['#f59e0b', '#0f766e'] : ['#e5e7eb', '#d6d3d1']);
+
+            chartPanelOdemeSekliPieInstance = new Chart(ctxPie, {
+                type: 'pie',
+                data: {
+                    labels: ['Kredi', 'Nakit'],
+                    datasets: [{
+                        data: pieHasData ? [pieKrediToplam, pieNakitToplam] : [1, 1],
+                        backgroundColor: pieHasData ? ['#f59e0b', '#0f766e'] : ['#e5e7eb', '#d6d3d1'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            display: pieHasData,
+                            color: '#1c1917',
+                            font: { family: 'Inter', size: 12, weight: '700' },
+                            formatter: (val, ctx) => {
+                                const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                const pct = total > 0 ? (val / total * 100) : 0;
+                                return `%${pct.toLocaleString('tr-TR', { maximumFractionDigits: 1 })}\n₺${val.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`;
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const name = ctx.chart.data.labels[ctx.dataIndex] || '';
+                                    return ` ${name}: ₺${ctx.raw.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            updatePanelOdemeModePieButtons();
+        }
+
+        function setPanelOdemeSekliPieMode(mode) {
+            panelOdemeSekliPieMode = mode;
+            renderOdemeSekliPieChart();
+        }
+
+        function updatePanelOdemeModePieButtons() {
+            const modeLabels = { gunluk: 'gunluk', toplam: 'toplam' };
+            Object.keys(modeLabels).forEach(m => {
+                const activeClass = 'px-4 py-2 text-xs font-semibold rounded-lg transition-all bg-amber-500 text-stone-900 shadow-sm';
+                const inactiveClass = 'px-4 py-2 text-xs font-semibold rounded-lg transition-all text-stone-600 hover:text-stone-900';
+                const btnPie = document.getElementById('panelOdemeModeBtnPie-' + m);
+                if (btnPie) btnPie.className = (m === panelOdemeSekliPieMode) ? activeClass : inactiveClass;
+            });
+            const dateInputPie = document.getElementById('panelOdemeSekliDatePie');
+            if (dateInputPie) dateInputPie.disabled = (panelOdemeSekliPieMode !== 'gunluk');
         }
 
         function updateProductPrice(productName, newPrice) {
