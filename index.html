@@ -1754,6 +1754,21 @@
             return null;
         }
 
+        // Dosyanın herhangi bir hücresinde "Ürün Satış Raporu" başlığı altındaki
+        // "2026-08-02 - 2026-08-02" gibi rapor tarih aralığını arar ve bulursa
+        // YYYY-MM-DD formatında döner. Bulunamazsa null döner.
+        function detectReportDate(aoa) {
+            if (!aoa) return null;
+            const dateRangeRegex = /(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/;
+            for (let i = 0; i < aoa.length; i++) {
+                const row = aoa[i] || [];
+                const rowText = row.map(c => String(c === undefined || c === null ? '' : c)).join(' | ');
+                const m = rowText.match(dateRangeRegex);
+                if (m) return `${m[1]}-${pad2(m[2])}-${pad2(m[3])}`;
+            }
+            return null;
+        }
+
         function setupDropzoneEvents() {
             const zone = document.getElementById('fileDropzone');
             if (!zone) return;
@@ -1814,7 +1829,8 @@
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
                     const rows = buildRowsFromAoa(aoa);
-                    importParsedRows(rows, file.name);
+                    const detectedDate = detectReportDate(aoa);
+                    importParsedRows(rows, file.name, detectedDate);
                 } catch (err) {
                     console.error(err);
                     showDropzoneError('Dosya okunurken bir hata oluştu.');
@@ -1873,7 +1889,7 @@
             return rows;
         }
 
-        function importParsedRows(rows, fileName) {
+        function importParsedRows(rows, fileName, detectedDate) {
             if (!rows || rows.length === 0) {
                 showDropzoneError('Dosyada okunabilir veri bulunamadı.');
                 return;
@@ -1897,10 +1913,12 @@
             });
 
             const dateEl = document.getElementById('urunInputDate');
-            const fallbackDate = (dateEl && dateEl.value) || TODAY_STR;
+            const inputDate = (dateEl && dateEl.value) || null;
+            const fallbackDate = inputDate || TODAY_STR;
             let importedCount = 0;
             let skippedCount = 0;
             const skippedNames = [];
+            const usedDates = {};
 
             rows.forEach(row => {
                 const rawProduct = row[productKey];
@@ -1922,8 +1940,18 @@
                 const targetCategory = productLookup[normProduct].category;
                 const targetProduct = productLookup[normProduct].product;
 
-                // Tarih her zaman üstteki tarih girişinden alınır (dosyadaki tarih sütunu dikkate alınmaz)
-                const entryDate = fallbackDate;
+                // Tarih önceliği: 1) satırdaki "Tarih" sütunu, 2) dosyanın rapor
+                // başlığında bulunan tarih aralığı (ör. "2026-08-02 - 2026-08-02"),
+                // 3) üstteki tarih girişi, 4) bugünün tarihi.
+                let entryDate = null;
+                if (dateKey) {
+                    const parsedRowDate = parseDateValue(row[dateKey]);
+                    if (parsedRowDate) entryDate = parsedRowDate;
+                }
+                if (!entryDate && detectedDate) entryDate = detectedDate;
+                if (!entryDate) entryDate = fallbackDate;
+
+                usedDates[entryDate] = (usedDates[entryDate] || 0) + 1;
 
                 urunHistory.unshift({
                     id: Date.now() + Math.floor(Math.random() * 100000),
@@ -1942,10 +1970,22 @@
                 return;
             }
 
+            // Dosyadan tek ve net bir tarih tespit edildiyse, üstteki tarih
+            // seçiciyi de bununla eşleştir ki ekrandaki tarih dosyayla tutarlı olsun.
+            const dateList = Object.keys(usedDates);
+            if (dateList.length === 1 && dateEl && dateList[0] !== inputDate) {
+                dateEl.value = dateList[0];
+            }
+
             const stText = document.getElementById('dropzoneSuccessText');
             const stSub = document.getElementById('dropzoneSuccessSub');
             if (stText) stText.textContent = `"${fileName}" yüklendi.`;
-            if (stSub) stSub.textContent = `${importedCount} satır aktarıldı${skippedCount ? `, ${skippedCount} eşleşmeyen ürün yok sayıldı` : ''}.`;
+            const dateNote = dateList.length === 1
+                ? ` (${dateList[0]} tarihiyle)`
+                : dateList.length > 1
+                    ? ` (${dateList.length} farklı tarihle)`
+                    : '';
+            if (stSub) stSub.textContent = `${importedCount} satır aktarıldı${dateNote}${skippedCount ? `, ${skippedCount} eşleşmeyen ürün yok sayıldı` : ''}.`;
             showDropzoneState('success');
 
             renderUrunCategoryTabs();
